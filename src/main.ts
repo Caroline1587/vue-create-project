@@ -10,11 +10,14 @@ import 'element-plus/dist/index.css'  // 引入样式
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';  // 引入 Bootstrap 的 JS 和 Popper
 
-
-
 const app=createApp(App)
 
 app.use(ElementPlus)  // 使用 Element Plus 插件
+
+const rootValue = 16
+const rootWidth = 780//设计稿宽度
+const deviceWidth = document.documentElement.clientWidth//用户屏幕宽度
+document.documentElement.style.fontSize = (deviceWidth * rootValue) / rootWidth + 'px'
 
 
 app.mount('#app')

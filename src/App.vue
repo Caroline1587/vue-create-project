@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import TaskRecord from './views/TaskRecord.vue'
+import HomePage from "./views/HomePage.vue";
 </script>
 
 <template>
-
-  <TaskRecord msg="Vite + Vue" />
+  <HomePage />
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+
+// .home-wrapper {
+//   height: 100%;
+//   width: 100%;
+// }
 /* .logo {
   height: 6em;
   padding: 1.5em;
