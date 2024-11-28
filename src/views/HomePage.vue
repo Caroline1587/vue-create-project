@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ComponentSize } from "element-plus";
-import { ref } from "vue";
+import { ComponentSize,ElMessageBox } from "element-plus";
+import { reactive, ref } from "vue";
 import { Timer, ArrowDown } from "@element-plus/icons-vue";
 
 import TaskTable from "../components/TaskTable.vue";
@@ -55,15 +55,22 @@ const deleteRow = (index: number) => {
 
 //
 const dialogVisible = ref(false);
+const innerVisible = ref(false)
+
 const dynamicForm = ref([]);
 const createCommand = ref("");
 
 const handleCommand = (command: string) => {
-  dialogVisible.value = true;
+  dialogVisible.value = true;//打开对话框
   createCommand.value = `${command} 导入`;
-  dynamicForm.value =
-    command === "excel"
-      ? [
+
+  const initials = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+  const options = Array.from({ length: 1000 }).map((_, idx) => ({
+  value: `Option ${idx + 1}`,
+  label: `${initials[idx % 10]}${idx}`,
+}))
+
+const byExcel = [
           {
             label: "任务编号",
             key: "taskId",
@@ -75,44 +82,73 @@ const handleCommand = (command: string) => {
             key: "usecaseFile",
             type: "select",
             placeholder: "请选择任务文件",
-            options: ["文件1", "文件3", "文件2"],
+            options,
           },
           {
             label: "目标路径",
             key: "targetPath",
             type: "select",
             placeholder: "请选择目标路径",
-            options: ["路径2", "路径1", "路径1"],
-          },
-        ]
-      : [
-          {
-            label: "用例来源",
-            key: "usecaseSource",
-            type: "input",
-            placeholder: "TPA",
-            disabled: true,
-          },
-          {
-            label: "项目名称",
-            key: "usecaseSource",
-            type: "select",
-            placeholder: "请选择项目名称",
-            options: ["项目3", "项目2", "项目1"],
+            options,
           },
         ];
+const byTestManagement=[
+  {
+    label: "用例来源",
+    key: "usecaseSource",
+    type: "input",
+    placeholder: "TPA",
+    disabled: true,
+  },
+  {
+    label: "项目名称",
+    key: "usecaseSource",
+    type: "select",
+    placeholder: "请选择项目名称",
+    options,
+  },
+]
+dynamicForm.value =
+  (command === "excel"
+    ? byExcel
+    : byTestManagement)
 };
+
+//清空select下拉框的值
+const clearOptionValue=()=>{
+
+}
+
+//关闭dialog对话框前的操作
+const handleClose = (done: () => void) => {
+  ElMessageBox.confirm('Are you sure to close this dialog?')
+    .then(() => {
+      clearOptionValue();
+      done()
+    })
+    .catch(() => {
+      // catch error
+    })
+}
+
+const isConversionScopeShown=ref(false);
+
+const hasChanged=(value: string|number|undefined)=>{
+  console.log('update方法之执行======',value);
+  // console.log('update方法之执行======',typeof(value));
+  isConversionScopeShown.value=true;
+  console.log("isConversionScopeShown:",isConversionScopeShown);
+}
+
 </script>
 
 <template>
   <div class="home-warpper">
     <div class="header">
-      <div class="header__title">任务记录</div>
+      <div class="header__title" >任务记录</div>
       <div class="header__btn --flex-center">
-        <!-- <el-button class="mt-4" type="primary" style="width:fit-content;" @click="onAddItem">
-          Add Item
-        </el-button> -->
-        <el-dropdown @command="handleCommand" class="header__btn__create">
+        <!-- inert -->
+        <el-dropdown  @command="handleCommand" class="header__btn__create">
           <el-button type="primary">
             新建任务<el-icon class="el-icon--right"><arrow-down /></el-icon>
           </el-button>
@@ -130,13 +166,34 @@ const handleCommand = (command: string) => {
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <el-button class="header__btn__monitor" type="primary">
+        <el-button class="header__btn__monitor" type="primary" aria-label="任务监控器">
           任务监控器
         </el-button>
       </div>
     </div>
-    <el-dialog v-model="dialogVisible" :title="createCommand">
-      <DynamicForm :fields="dynamicForm" />
+    <el-dialog v-model="dialogVisible" :title="createCommand" :before-close="handleClose">
+      <DynamicForm :fields="dynamicForm" @update:modelValue="(modelValue)=>hasChanged(modelValue)">
+            <!-- 插入动态内容 -->
+            <template #selectExtra>
+              <!-- && dynamicForm.find((item)=>item.key==='usecaseFile') -->
+              <div v-if="isConversionScopeShown" class="innerConversionScope --flex-center">
+                <span class="innerConversionScope__title">转换范围</span>
+
+                <el-card class="innerConversionScope__content">
+                  <template #header >
+                    <div class="card-header">
+                      <span>Card name</span>
+                    </div>
+                  </template>
+                    <p v-for="o in 14" :key="o" class="text item">{{ 'List item ' + o }}</p>
+                  <template #footer>Footer content</template>
+                </el-card>
+
+              </div>
+            </template>
+      </DynamicForm>
+
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">Cancel</el-button>
@@ -166,10 +223,6 @@ const handleCommand = (command: string) => {
   justify-content: space-between;
   height: 100%;
   width: 100%;
-  overflow: scroll;
-  //   height: 100vh;
-  //   width: 100vw;
-
   .header {
     display: flex;
     justify-content: space-between;
@@ -194,13 +247,30 @@ const handleCommand = (command: string) => {
       }
     }
   }
+  .innerConversionScope{
+    // height: 200px;
+    margin-bottom: 18px;
+     &__content{
+        flex: 1;
+        max-width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+     }
+     &__title{
+      box-sizing: border-box;
+      width: 120px;
+      text-align: end;
+      align-self: first baseline;
+      padding: 0 12px 0 0;
+     }
+  }
   .main {
     display: flex;
     flex-direction: column;
     justify-content: center;
     flex: 1;
     height: 80%;
-    overflow: scroll;
+    // overflow: scroll;
     width: 100%;
     :deep(.el-pagination) {
       //   position: absolute;

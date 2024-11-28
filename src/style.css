@@ -1,4 +1,7 @@
 :root {
+  /* --buildStatus-color--executing:#409efc ;
+  --buildStatus-color--waiting:gray;
+  --buildStatus-color--finished: green; */
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -13,6 +16,16 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+.--buildStatus-color--executing{
+  color:#409efc  ;
+}
+.--buildStatus-color--waiting{
+  color:gray  ;
+}
+.--buildStatus-color--finished{
+  color:green  ;
+}
+
 .--flex-center {
   display: flex;
   justify-content: center;
@@ -33,7 +46,8 @@ body {
   display: flex;
   place-items: center;
   min-width: 320px;
-  min-height: 100vh;
+  /* min-height: 100vh; */
+  height:100vh
 }
 
 /* h1 {

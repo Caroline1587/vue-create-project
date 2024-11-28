@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { defineProps, defineEmits } from "vue";
+import { defineProps, defineEmits,computed } from "vue";
+import {RefreshRight,MoreFilled,SuccessFilled}from "@element-plus/icons-vue"
 
 const props = defineProps({
   tableData: Array, // 表格当前页数据
@@ -13,6 +14,22 @@ const emits = defineEmits(["update:currentPage", "update:pageSize", "remove"]);
 const handleRemove = (index: number) => emits("remove", index);
 const handlePageChange = (page: number) => emits("update:currentPage", page);
 const handleSizeChange = (size: number) => emits("update:pageSize", size);
+
+// const buildStatusContentColor=computed(()=>{
+
+// })
+
+// 表格标题字段
+interface ITableColumnFields{
+  fielsd:ITableColumnField[]
+}
+interface ITableColumnField{
+  prop:string
+  label:string
+}
+
+
+
 </script>
 
 <template>
@@ -27,17 +44,28 @@ const handleSizeChange = (size: number) => emits("update:pageSize", size);
       <el-table-column prop="targetPosition" label="目标位置" />
       <el-table-column label="生成状态">
         <template #default="scope">
-          <div>
-            <el-icon>
-              <timer />
-            </el-icon>
-            {{ scope.row.buildStatus }}
+          <!-- <el-button type="primary" size="small" text loading>{{scope.row.buildStatus}}</el-button> -->
+          <!-- <el-icon><RefreshRight /></el-icon> -->
+          <div class="buildStatusWrapper">
+            <!-- todo： 根据 buildStatus 动态调整图标 -->
+            <div class="buildStatusContent  --flex-center --buildStatus-color--executing" v-if='scope.row.buildStatus ==="执行中"'>
+              <el-icon  class="is-loading " ><RefreshRight /></el-icon>
+              <span>{{ scope.row.buildStatus }}</span>
+            </div>
+            <div class="buildStatusContent  --flex-center --buildStatus-color--waiting" v-else-if='scope.row.buildStatus ==="等待中"'>
+              <el-icon ><MoreFilled /></el-icon>
+              <span>{{ scope.row.buildStatus }}</span>
+            </div>
+            <div class="buildStatusContent  --flex-center --buildStatus-color--finished" v-else-if='scope.row.buildStatus ==="已完成"'>
+              <el-icon ><SuccessFilled /></el-icon>
+              <span>{{ scope.row.buildStatus }}</span>
+            </div>
           </div>
         </template>
       </el-table-column>
       <el-table-column label="操作" fixed="right" min-width="120">
         <template #default="scope">
-          <el-button type="text" @click="handleRemove(scope.$index)"
+          <el-button type="" @click="handleRemove(scope.$index)"
             >删除</el-button
           >
         </template>
@@ -58,5 +86,12 @@ const handleSizeChange = (size: number) => emits("update:pageSize", size);
 <style lang="scss" scoped>
 :deep(.el-pagination .btn-prev) {
   margin-left: auto;
+}
+.buildStatusContent{
+  justify-content: flex-start;
+  // color:var(--buildStatus--waiting);
+  .el-icon{
+    margin-right:0.1rem ;
+  }
 }
 </style>
