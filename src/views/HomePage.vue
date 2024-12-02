@@ -2,22 +2,21 @@
 import { ComponentSize, ElMessageBox } from "element-plus";
 import { computed, onMounted, provide, reactive, ref } from "vue";
 import { Timer, ArrowDown } from "@element-plus/icons-vue";
-import dayjs from 'dayjs'
-
+import dayjs from "dayjs";
 
 import TaskTable from "../components/TaskTable.vue";
 import DynamicForm from "../components/DynamicForm.vue";
 import TpaUsecaseImport from "../components/TpaUsecaseImport.vue";
 
-export interface IData{
-  id:string,
-  start:string,
-  finish:string,
-  convertUsecaseCount:number,
-  usecaseSource:string,
-  targetPosition:string,
-  buildStatus:string,
-  operation:string[]|null
+export interface IData {
+  id: string;
+  start: string;
+  finish: string;
+  convertUsecaseCount: number;
+  usecaseSource: string;
+  targetPosition: string;
+  buildStatus: string;
+  operation: string[] | null;
 }
 // 模拟获取分页数据（可替换为真实的后端 API 调用）
 const allData = ref(
@@ -34,18 +33,28 @@ const allData = ref(
 );
 
 // 分离并按状态分组
-const waitingRows = computed(() => allData.value.filter(item => item.buildStatus === '等待中'));
-const inProgressRows = computed(() => allData.value.filter(item => item.buildStatus === '执行中'));
-const completedRows = computed(() => allData.value.filter(item => item.buildStatus === '已完成'));
+const waitingRows = computed(() =>
+  allData.value.filter((item) => item.buildStatus === "等待中")
+);
+const inProgressRows = computed(() =>
+  allData.value.filter((item) => item.buildStatus === "执行中")
+);
+const completedRows = computed(() =>
+  allData.value.filter((item) => item.buildStatus === "已完成")
+);
 
-const waitingRowsLengthInAll=computed(()=>waitingRows.value.length);
+const waitingRowsLengthInAll = computed(() => waitingRows.value.length);
 
 // 合并按状态排序后的行
 const sortedAllTableData = computed(() => {
-  console.log('waitingRows',waitingRows.value);
-  console.log('inProgressRows',inProgressRows.value);
-  
-  const res=[...waitingRows.value, ...inProgressRows.value, ...completedRows.value]  
+  console.log("waitingRows", waitingRows.value);
+  console.log("inProgressRows", inProgressRows.value);
+
+  const res = [
+    ...waitingRows.value,
+    ...inProgressRows.value,
+    ...completedRows.value,
+  ];
   return res;
 });
 const fetchTableData = (page: number, size: number) => {
@@ -66,8 +75,8 @@ const commandTitle = ref("");
 const handleCommand = (command: string) => {
   dialogVisible.value = true; //打开对话框
   // createCommand.value=command
-  commandTitle.value =command;
-  
+  commandTitle.value = command;
+
   const initials = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
   const options = Array.from({ length: 1000 }).map((_, idx) => ({
     value: `Option ${idx + 1}`,
@@ -136,7 +145,7 @@ const handleClose = (done: () => void) => {
 const isConversionScopeShown = ref(false);
 
 const formData = ref(null);
-const hasChanged = (formVal:  {[key:string]:string|object}|null) => {
+const hasChanged = (formVal: { [key: string]: string | object } | null) => {
   console.log("update方法之执行======", formVal);
   formData.value = formVal;
   console.log("formData======", formData.value);
@@ -156,7 +165,6 @@ const pageSizes = ref([20, 40, 60, 80]);
 // const disabled = ref(false);
 // 初始化数据
 fetchTableData(currentPage.value, pageSize.value);
-
 
 // 页码变化处理
 const handlePageChange = (page: number) => {
@@ -180,16 +188,15 @@ const deleteRow = (index: number) => {
   fetchTableData(currentPage.value, pageSize.value); //重新获取数据
 };
 //更改index
-const handleIndexUpdate = (curIndex:number,changedIndex:number) => {
-  console.log("父组件接受的index",curIndex);  
-    // 交换当前项和上/下一项
-    const temp = sortedAllTableData.value[curIndex];
-    sortedAllTableData.value[curIndex] =sortedAllTableData.value[changedIndex];
-    sortedAllTableData.value[changedIndex] = temp;
-    console.log('sortedAllTableData',sortedAllTableData );
-  
-  fetchTableData(currentPage.value, pageSize.value);
+const handleIndexUpdate = (curIndex: number, changedIndex: number) => {
+  console.log("父组件接受的index", curIndex);
+  // 交换当前项和上/下一项
+  const temp = sortedAllTableData.value[curIndex];
+  sortedAllTableData.value[curIndex] = sortedAllTableData.value[changedIndex];
+  sortedAllTableData.value[changedIndex] = temp;
+  console.log("sortedAllTableData", sortedAllTableData);
 
+  fetchTableData(currentPage.value, pageSize.value);
 };
 
 // const isClearForm=ref(false);
@@ -197,17 +204,17 @@ const onConfirm = () => {
   dialogVisible.value = false; //关闭对话框
   //todo: 数据展示在table中
 
-  const start= dayjs().format('YYYY-MM-DD HH:mm:ss')  //返回当前时间
-  const finish= dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss')  //todo:完成时间
-  console.log('date===========',start);
-  
-  const convertUsecaseCount=formData.value.convertUsecaseCount;
-  const usecaseSource=formData.value.usecaseFile;
-  const targetPosition=formData.value.usecaseFile;//todo
-  const buildStatus='已完成'//todo
-  const operation=[''];
-  const id=formData.value.taskId;
-  const each={
+  const start = dayjs().format("YYYY-MM-DD HH:mm:ss"); //返回当前时间
+  const finish = dayjs().endOf("month").format("YYYY-MM-DD HH:mm:ss"); //todo:完成时间
+  console.log("date===========", start);
+
+  const convertUsecaseCount = formData.value.convertUsecaseCount;
+  const usecaseSource = formData.value.usecaseFile;
+  const targetPosition = formData.value.usecaseFile; //todo
+  const buildStatus = "已完成"; //todo
+  const operation = [""];
+  const id = formData.value.taskId;
+  const each = {
     id,
     start,
     finish,
@@ -215,37 +222,35 @@ const onConfirm = () => {
     usecaseSource,
     targetPosition,
     buildStatus,
-    operation
-  }
+    operation,
+  };
   allData.value.push(each);
-  console.log('each====',each);
+  console.log("each====", each);
   fetchTableData(currentPage.value, pageSize.value);
   //todo: 当前对话框数据清空
   // isClearForm.value=true;
   // provide('isClearForm',true);
 };
 
-const innerVisible=ref(false);
-const onNext=()=>{
+const innerVisible = ref(false);
+const onNext = () => {
   console.log("next ");
-  innerVisible.value=true;//dakai
-
-}
+  innerVisible.value = true; //dakai
+};
 
 const handleCloseInner = (done: () => void) => {
-  ElMessageBox.confirm('Are you sure to close this dialog?')
+  ElMessageBox.confirm("Are you sure to close this dialog?")
     .then(() => {
-      done()
+      done();
     })
     .catch(() => {
       // catch error
-    })
-}
-
+    });
+};
 </script>
 
 <template>
-  <div class="home-warpper">
+  <div class="home-warpper" id="home">
     <div class="header">
       <div class="header__title">任务记录</div>
       <div class="header__btn --flex-center">
@@ -281,9 +286,9 @@ const handleCloseInner = (done: () => void) => {
       v-model="dialogVisible"
       :title="`${commandTitle} 导入`"
       :before-close="handleClose"
-      v-if ="dialogVisible"
+      v-if="dialogVisible"
     >
-    <!-- :isClearForm="isClearForm" -->
+      <!-- :isClearForm="isClearForm" -->
       <DynamicForm
         :fields="dynamicForm"
         @update:modelValue="(formData) => hasChanged(formData)"
@@ -326,30 +331,47 @@ const handleCloseInner = (done: () => void) => {
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">Cancel</el-button>
-          <el-button v-if="commandTitle==='excel'" type="primary" @click="onConfirm"> Confirm </el-button>
-          <el-button v-else-if="commandTitle==='test-management'" type="primary" @click="onNext"> next </el-button>
+          <el-button
+            v-if="commandTitle === 'excel'"
+            type="primary"
+            @click="onConfirm"
+          >
+            Confirm
+          </el-button>
+          <el-button
+            v-else-if="commandTitle === 'test-management'"
+            type="primary"
+            @click="onNext"
+          >
+            next
+          </el-button>
         </div>
       </template>
     </el-dialog>
 
     <el-dialog
-    class="tpe-usecase-import"
-    v-model="innerVisible"
-    title="新建任务"
-    :before-close="handleCloseInner"
-  >
-   
-    <TpaUsecaseImport/>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="innerVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="innerVisible = false">
-          Ok
-        </el-button>
-      </div>
-    </template>
-  </el-dialog>
-
+      class="tpe-usecase-import"
+      v-model="innerVisible"
+      title="新建任务"
+      modal-class="usecase-modal"
+      :before-close="handleCloseInner"
+    >
+      <template #header="{}">
+        <div class="my-header">
+          <div class="rectangle"></div>
+          <div class="title">新建任务</div>
+        </div>
+      </template>
+      <TpaUsecaseImport />
+      <!-- <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="innerVisible = false">Cancel</el-button>
+          <el-button type="primary" @click="innerVisible = false">
+            Ok
+          </el-button>
+        </div>
+      </template> -->
+    </el-dialog>
 
     <TaskTable
       class="main"
@@ -430,14 +452,13 @@ const handleCloseInner = (done: () => void) => {
       }
     }
   }
-  :deep(.el-overlay .el-overlay-dialog .el-dialog){
-    width: 800px;//1600px
-    height: 400px;//880px 
+  :deep(.el-overlay .el-overlay-dialog .el-dialog) {
+    // width: fit-content; //1600px
+    // height: fit-content; //880px
     // top: 100px;
     // left: 160px;
     gap: 0px;
     // opacity: 0;
-
   }
   .main {
     display: flex;
@@ -453,6 +474,41 @@ const handleCloseInner = (done: () => void) => {
       //   left: 0;
       margin-top: 0.5rem;
     }
+  }
+}
+:deep(.tpe-usecase-import) {
+  width: fit-content;
+}
+.my-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 172px; //Hug (172px)px
+  height: 29px; // Hug (29px)px
+  box-sizing: border-box;
+  gap: 8px;
+  opacity: 0px;
+
+  .rectangle {
+    width: 3px;
+    height: 17px;
+    gap: 0px;
+    opacity: 0px;
+    background: #5a78ff;
+  }
+  .title {
+    width: 118px;
+    height: 29px;
+    gap: 0px;
+    opacity: 0px;
+    color: #283a64;
+    font-family: Noto Sans SC;
+    font-size: 16px; //20px
+    font-weight: 700;
+    line-height: 28.96px; //28.96px
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
   }
 }
 </style>
