@@ -97,25 +97,55 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, reactive, ref } from "vue";
+import { computed, inject, reactive, ref, watch } from "vue";
 import * as XLSX from "xlsx";
+import dayjs from 'dayjs'
+
 
 // import type{IBuildStatus }from "@/types"
 import { BuildStatus } from "../config";
 
 const props = defineProps({
   fields: Array,
+  // isClearForm:Boolean
 });
 // const emits = defineEmits(["update"]);
 interface IEmits {
+  (e: "resetFormData"): void;
   (e: "update:modelValue", value?: string | number): void;
   (e: "inputClick"): void;
 }
 const emits = defineEmits<IEmits>();
 
+// 触发清空的标志
+// const formCleared = ref(false);
+// watch(()=>props.isClearForm,(newItem, oldItem) => {
+//     if (newItem) {
+//       console.log('数据项发生变化:', newItem);
+//       // 清空 formData 内容
+//       Object.keys(formData).forEach(key => {
+//       if (Array.isArray(formData[key])) {
+//         formData[key] = []; // 清空数组字段
+//       } else {
+//         formData[key] = ''; // 清空非数组字段
+//       }
+//     });
+//     emits('resetFormData')
+//     formCleared.value = true; // 更新状态，表示表单已清空
+//     } else {
+//       console.log('该项已删除');
+//     }
+//   },
+//   { deep: true, immediate: true } // 深度监听，立即执行
+// )
+
+
+// let isClear=ref(false);
+// isClear.value=inject("clearForm");
 // 用来存储解析后的文件数据
 const formData = reactive({
   ranges: [], // 假设我们要提取“编号范围”数据并显示
+  convertUsecaseCount:0,//
 });
 
 export interface ISheetRange {
@@ -165,6 +195,7 @@ const handleFileSelect = (event: Event) => {
   }
   console.log("Selected file:", file);
 
+  let count=0;
   // 使用 FileReader 读取文件
   const reader = new FileReader();
   // 绑定事件
@@ -198,12 +229,14 @@ const handleFileSelect = (event: Event) => {
         };
         // 将结果存储到 formData 中，用于在页面显示
         formData.ranges.push(eachSheet);
+        count+=ranges.length;//统计数
         // formData.ranges[sheetName] = ranges.join(", "); // 将数组合并为字符串
       } else {
         console.error(
           `Sheet ${sheetName} does not have the "编号范围" column.`
         );
       }
+      formData.convertUsecaseCount=count;
       console.log("formdatada", formData);
       emits("update:modelValue", formData);
     });

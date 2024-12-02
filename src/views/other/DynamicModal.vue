@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, defineProps } from "vue";
+import { ref, onMounted} from "vue";
 import { Modal } from "bootstrap";
 
 // 定义接收的 props

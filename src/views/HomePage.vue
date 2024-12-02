@@ -1,17 +1,30 @@
 <script setup lang="ts">
 import { ComponentSize, ElMessageBox } from "element-plus";
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, provide, reactive, ref } from "vue";
 import { Timer, ArrowDown } from "@element-plus/icons-vue";
+import dayjs from 'dayjs'
+
 
 import TaskTable from "../components/TaskTable.vue";
 import DynamicForm from "../components/DynamicForm.vue";
+import TpaUsecaseImport from "../components/TpaUsecaseImport.vue";
 
+export interface IData{
+  id:string,
+  start:string,
+  finish:string,
+  convertUsecaseCount:number,
+  usecaseSource:string,
+  targetPosition:string,
+  buildStatus:string,
+  operation:string[]|null
+}
 // 模拟获取分页数据（可替换为真实的后端 API 调用）
 const allData = ref(
   Array.from({ length: 100 }, (_, index) => ({
-    id: index + 1,
-    startDate: `2024-11-${(index % 30) + 1}`,
-    finishDate: `2025-11-${(index % 30) + 1}`,
+    id: `${index + 1}`,
+    start: `2024-11-${(index % 30) + 1}`,
+    finish: `2025-11-${(index % 30) + 1}`,
     convertUsecaseCount: Math.floor(Math.random() * 100),
     usecaseSource: `source-${index + 1}`,
     targetPosition: `target-${index + 1}`,
@@ -19,10 +32,26 @@ const allData = ref(
     operation: ["删除", "下移"],
   }))
 );
+
+// 分离并按状态分组
+const waitingRows = computed(() => allData.value.filter(item => item.buildStatus === '等待中'));
+const inProgressRows = computed(() => allData.value.filter(item => item.buildStatus === '执行中'));
+const completedRows = computed(() => allData.value.filter(item => item.buildStatus === '已完成'));
+
+const waitingRowsLengthInAll=computed(()=>waitingRows.value.length);
+
+// 合并按状态排序后的行
+const sortedAllTableData = computed(() => {
+  console.log('waitingRows',waitingRows.value);
+  console.log('inProgressRows',inProgressRows.value);
+  
+  const res=[...waitingRows.value, ...inProgressRows.value, ...completedRows.value]  
+  return res;
+});
 const fetchTableData = (page: number, size: number) => {
   const startIndex = (page - 1) * size;
   const endIndex = startIndex + size;
-  tableData.value = allData.value.slice(startIndex, endIndex);
+  tableData.value = sortedAllTableData.value.slice(startIndex, endIndex);
 };
 
 //
@@ -30,12 +59,15 @@ const dialogVisible = ref(false);
 // const innerVisible = ref(false);
 
 const dynamicForm = ref([]);
-const createCommand = ref("");
+
+// const createCommand = ref("");
+const commandTitle = ref("");
 
 const handleCommand = (command: string) => {
   dialogVisible.value = true; //打开对话框
-  createCommand.value = `${command} 导入`;
-
+  // createCommand.value=command
+  commandTitle.value =command;
+  
   const initials = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
   const options = Array.from({ length: 1000 }).map((_, idx) => ({
     value: `Option ${idx + 1}`,
@@ -104,13 +136,13 @@ const handleClose = (done: () => void) => {
 const isConversionScopeShown = ref(false);
 
 const formData = ref(null);
-const hasChanged = (value: string | number | undefined | null) => {
-  console.log("update方法之执行======", value);
-  formData.value = value;
+const hasChanged = (formVal:  {[key:string]:string|object}|null) => {
+  console.log("update方法之执行======", formVal);
+  formData.value = formVal;
   console.log("formData======", formData.value);
 
   // console.log('update方法之执行======',typeof(value));
-  if (value) isConversionScopeShown.value = true;
+  if (formData.value.usecaseFile) isConversionScopeShown.value = true;
 };
 
 const tableData = ref([]); // 当前页数据
@@ -124,6 +156,7 @@ const pageSizes = ref([20, 40, 60, 80]);
 // const disabled = ref(false);
 // 初始化数据
 fetchTableData(currentPage.value, pageSize.value);
+
 
 // 页码变化处理
 const handlePageChange = (page: number) => {
@@ -146,11 +179,69 @@ const deleteRow = (index: number) => {
   allData.value.splice(index, 1);
   fetchTableData(currentPage.value, pageSize.value); //重新获取数据
 };
+//更改index
+const handleIndexUpdate = (curIndex:number,changedIndex:number) => {
+  console.log("父组件接受的index",curIndex);  
+    // 交换当前项和上/下一项
+    const temp = sortedAllTableData.value[curIndex];
+    sortedAllTableData.value[curIndex] =sortedAllTableData.value[changedIndex];
+    sortedAllTableData.value[changedIndex] = temp;
+    console.log('sortedAllTableData',sortedAllTableData );
+  
+  fetchTableData(currentPage.value, pageSize.value);
 
+};
+
+// const isClearForm=ref(false);
 const onConfirm = () => {
   dialogVisible.value = false; //关闭对话框
   //todo: 数据展示在table中
+
+  const start= dayjs().format('YYYY-MM-DD HH:mm:ss')  //返回当前时间
+  const finish= dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss')  //todo:完成时间
+  console.log('date===========',start);
+  
+  const convertUsecaseCount=formData.value.convertUsecaseCount;
+  const usecaseSource=formData.value.usecaseFile;
+  const targetPosition=formData.value.usecaseFile;//todo
+  const buildStatus='已完成'//todo
+  const operation=[''];
+  const id=formData.value.taskId;
+  const each={
+    id,
+    start,
+    finish,
+    convertUsecaseCount,
+    usecaseSource,
+    targetPosition,
+    buildStatus,
+    operation
+  }
+  allData.value.push(each);
+  console.log('each====',each);
+  fetchTableData(currentPage.value, pageSize.value);
+  //todo: 当前对话框数据清空
+  // isClearForm.value=true;
+  // provide('isClearForm',true);
 };
+
+const innerVisible=ref(false);
+const onNext=()=>{
+  console.log("next ");
+  innerVisible.value=true;//dakai
+
+}
+
+const handleCloseInner = (done: () => void) => {
+  ElMessageBox.confirm('Are you sure to close this dialog?')
+    .then(() => {
+      done()
+    })
+    .catch(() => {
+      // catch error
+    })
+}
+
 </script>
 
 <template>
@@ -188,12 +279,14 @@ const onConfirm = () => {
     </div>
     <el-dialog
       v-model="dialogVisible"
-      :title="createCommand"
+      :title="`${commandTitle} 导入`"
       :before-close="handleClose"
+      v-if ="dialogVisible"
     >
+    <!-- :isClearForm="isClearForm" -->
       <DynamicForm
         :fields="dynamicForm"
-        @update:modelValue="(modelValue) => hasChanged(modelValue)"
+        @update:modelValue="(formData) => hasChanged(formData)"
       >
         <!-- 插入动态内容 -->
         <template #selectExtra>
@@ -233,19 +326,41 @@ const onConfirm = () => {
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="onConfirm"> Confirm </el-button>
+          <el-button v-if="commandTitle==='excel'" type="primary" @click="onConfirm"> Confirm </el-button>
+          <el-button v-else-if="commandTitle==='test-management'" type="primary" @click="onNext"> next </el-button>
         </div>
       </template>
     </el-dialog>
+
+    <el-dialog
+    class="tpe-usecase-import"
+    v-model="innerVisible"
+    title="新建任务"
+    :before-close="handleCloseInner"
+  >
+   
+    <TpaUsecaseImport/>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="innerVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="innerVisible = false">
+          Ok
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
+
 
     <TaskTable
       class="main"
       :table-data="tableData"
       :total="total"
       :pageSizes="pageSizes"
+      :waitingRowsLengthInAll="waitingRowsLengthInAll"
       v-model:currentPage="currentPage"
       v-model:pageSize="pageSize"
       @remove="deleteRow"
+      @update:index="handleIndexUpdate"
       @update:currentPage="(page: number) => handlePageChange(page)"
       @update:pageSize="(size:number)=>handleSizeChange(size)"
     />
@@ -314,6 +429,15 @@ const onConfirm = () => {
         flex: 2;
       }
     }
+  }
+  :deep(.el-overlay .el-overlay-dialog .el-dialog){
+    width: 800px;//1600px
+    height: 400px;//880px 
+    // top: 100px;
+    // left: 160px;
+    gap: 0px;
+    // opacity: 0;
+
   }
   .main {
     display: flex;
