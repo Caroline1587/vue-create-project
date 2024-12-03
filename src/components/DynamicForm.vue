@@ -29,8 +29,6 @@
             {{ selectedFile ? selectedFile : field.placeholder }}</label
           >
 
-          <!-- v-if="field.type === 'file'" -->
-          <!-- :value="formData[field.key]" -->
           <input
             type="file"
             id="file_uploads"
@@ -40,24 +38,6 @@
           />
         </div>
 
-        <!-- folder选项 -->
-        <!-- <div
-          v-else-if="field.type === 'folder'"
-          class="el-form-item__content el-input el-input__wrapper --flex-center"
-          tabindex="-1"
-        >
-          <label for="folder_uploads" class="input-file-label">
-            {{ selectedFolder ? selectedFolder : field.placeholder }}</label
-          >
-          <input
-            type="file"
-            id="folder_uploads"
-            class="el-input__inner input-file-self"
-            @change="handleFolderSelect"
-            webkitdirectory
-          />
-        </div> -->
-  
         <!-- <el-input
           v-else-if="field.type === 'folder'"
           type="file"
@@ -88,7 +68,6 @@
       <template v-if="field.key === 'usecaseFile'">
         <slot name="selectExtra"></slot>
       </template>
-
     </template>
   </el-form>
 </template>
@@ -96,7 +75,7 @@
 <script setup lang="ts">
 import { computed, inject, reactive, ref, watch } from "vue";
 import * as XLSX from "xlsx";
-import dayjs from 'dayjs'
+import dayjs from "dayjs";
 
 // import type{IBuildStatus }from "@/types"
 import { BuildStatus } from "../config";
@@ -105,12 +84,12 @@ const props = defineProps({
   fields: Array,
   // isClearForm:Boolean
 });
-// const emits = defineEmits(["update"]);
+
 interface IEmits {
   (e: "resetFormData"): void;
-  (e: "update:formDataValue", value?: string | number|object): void;
+  (e: "update:formDataValue", value?: string | number | object): void;
   (e: "inputClick"): void;
-  (e:"update:selectedOption",value?: string | number|object):void
+  (e: "update:selectedOption", value?: string | number | object): void;
 }
 const emits = defineEmits<IEmits>();
 
@@ -136,13 +115,12 @@ const emits = defineEmits<IEmits>();
 //   { deep: true, immediate: true } // 深度监听，立即执行
 // )
 
-
 // let isClear=ref(false);
 // isClear.value=inject("clearForm");
 // 用来存储解析后的文件数据
 const formData = reactive({
   ranges: [], // 假设我们要提取“编号范围”数据并显示
-  convertUsecaseCount:0,//
+  convertUsecaseCount: 0, //
 });
 
 export interface ISheetRange {
@@ -192,7 +170,7 @@ const handleFileSelect = (event: Event) => {
   }
   console.log("Selected file:", file);
 
-  let count=0;
+  let count = 0;
   // 使用 FileReader 读取文件
   const reader = new FileReader();
   // 绑定事件
@@ -226,14 +204,14 @@ const handleFileSelect = (event: Event) => {
         };
         // 将结果存储到 formData 中，用于在页面显示
         formData.ranges.push(eachSheet);
-        count+=ranges.length;//统计数
+        count += ranges.length; //统计数
         // formData.ranges[sheetName] = ranges.join(", "); // 将数组合并为字符串
       } else {
         console.error(
           `Sheet ${sheetName} does not have the "编号范围" column.`
         );
       }
-      formData.convertUsecaseCount=count;
+      formData.convertUsecaseCount = count;
       console.log("formdatada", formData);
       emits("update:formDataValue", formData);
     });
@@ -245,8 +223,8 @@ const handleFileSelect = (event: Event) => {
 
 const initStatus: BuildStatus = ref(BuildStatus.Waiting); //初始状态
 
-const handleSelect= (option: string|number|object) => {
-  emits("update:selectedOption", option); 
+const handleSelect = (option: string | number | object) => {
+  emits("update:selectedOption", option);
 
   // excelParse(usecaseFile); //解析excel文件
 };

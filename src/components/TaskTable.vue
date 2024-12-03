@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {  computed, ref } from "vue";
+import { computed, ref } from "vue";
 import {
   RefreshRight,
   MoreFilled,
@@ -15,12 +15,17 @@ const props = defineProps({
   currentPage: Number, // 当前页码
   pageSize: Number, // 每页条数
   pageSizes: Array, //每页条数 选项
-  waitingRowsLengthInAll:Number,//“等待中”数据总数
+  waitingRowsLengthInAll: Number, //“等待中”数据总数
 });
 
 // const data=ref(props.tableData)
 
-const emits = defineEmits(["update:currentPage", "update:pageSize", "remove","update:index"]);
+const emits = defineEmits([
+  "update:currentPage",
+  "update:pageSize",
+  "remove",
+  "update:index",
+]);
 
 const handleRemove = (index: number) => emits("remove", index);
 const handlePageChange = (page: number) => {
@@ -30,34 +35,30 @@ const handleSizeChange = (size: number) => {
   emits("update:pageSize", size);
 };
 
+const handleCancel = (curPageIndex) => {};
+const handleMoveUp = (curPageIndex) => {
+  console.log("currentPage====", props.currentPage);
 
-const handleCancel=(curPageIndex)=>{}
-const handleMoveUp=(curPageIndex)=>{
-  console.log('currentPage====',props.currentPage);
-  
-  const index=(props.currentPage-1)*props.pageSize+curPageIndex;
+  const index = (props.currentPage - 1) * props.pageSize + curPageIndex;
   if (index > 0) {
-    console.log("上移 index",index);
-    const preIndex=index-1;
-     // 通知父组件更新数据
-     emits('update:index', index,preIndex); // 通过事件将更新的数据传递给父组件
+    console.log("上移 index", index);
+    const preIndex = index - 1;
+    // 通知父组件更新数据
+    emits("update:index", index, preIndex); // 通过事件将更新的数据传递给父组件
   }
-}
-const handleMoveDown=(curPageIndex)=>{
-  const index=(props.currentPage-1)*props.pageSize+curPageIndex;
-  const nextIndex=index+1;
-  if ((props.waitingRowsLengthInAll-1)>=nextIndex) {
-    console.log("xia移 index",index);
-    
-     // 通知父组件更新数据
-     emits('update:index', index,nextIndex); // 通过事件将更新的数据传递给父组件
-  }
+};
+const handleMoveDown = (curPageIndex) => {
+  const index = (props.currentPage - 1) * props.pageSize + curPageIndex;
+  const nextIndex = index + 1;
+  if (props.waitingRowsLengthInAll - 1 >= nextIndex) {
+    console.log("xia移 index", index);
 
-}
-const handleStop=(curPageIndex)=>{
-  
-}
-const handleStopToNext=(curPageIndex)=>{}
+    // 通知父组件更新数据
+    emits("update:index", index, nextIndex); // 通过事件将更新的数据传递给父组件
+  }
+};
+const handleStop = (curPageIndex) => {};
+const handleStopToNext = (curPageIndex) => {};
 
 // const buildStatusContentColor=computed(()=>{
 // })
@@ -72,33 +73,40 @@ const handleStopToNext=(curPageIndex)=>{}
     <!-- :default-sort="{ prop: 'buildStatus', order: 'descending' }" -->
     <el-table
       :data="tableData"
-     
       stripe
       height="85vh"
       highlight-current-row
       style="width: 100%"
     >
       <el-table-column type="index" fixed />
-      <el-table-column prop="id" label="任务编号" class="任务编号" />
-      <el-table-column prop="start" label="开始时间" >
+      <el-table-column prop="id" label="任务编号" />
+      <el-table-column prop="start" label="开始时间">
         <template #default="{ row }">
           <span :style="{ fontSize: '12px' }">{{ row.start }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="finish" label="完成时间" >
+      <el-table-column prop="finish" label="完成时间">
         <template #default="{ row }">
           <span :style="{ fontSize: '12px' }">{{ row.finish }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="convertUsecaseCount" label="转换用例数"  show-overflow-tooltip/>
+      <el-table-column
+        prop="convertUsecaseCount"
+        label="转换用例数"
+        show-overflow-tooltip
+      />
       <el-table-column
         prop="usecaseSource"
         label="用例来源"
         show-overflow-tooltip
       />
-      <el-table-column prop="targetPosition" label="目标位置" show-overflow-tooltip/>
+      <el-table-column
+        prop="targetPosition"
+        label="目标位置"
+        show-overflow-tooltip
+      />
       <!-- sortable -->
-      <el-table-column prop="buildStatus" label="生成状态" >
+      <el-table-column prop="buildStatus" label="生成状态">
         <template #default="scope">
           <!-- <el-button type="primary" size="small" text loading>{{scope.row.buildStatus}}</el-button> -->
           <!-- <el-icon><RefreshRight /></el-icon> -->
@@ -126,7 +134,9 @@ const handleStopToNext=(curPageIndex)=>{}
               class="buildStatusContent --flex-center --buildStatus-color--finished"
               v-else-if="scope.row.buildStatus === '已完成'"
             >
-              <el-icon class="--buildStatus-color--finished" ><SuccessFilled /></el-icon>
+              <el-icon class="--buildStatus-color--finished"
+                ><SuccessFilled
+              /></el-icon>
               <span>{{ scope.row.buildStatus }}</span>
             </div>
           </div>
@@ -138,10 +148,10 @@ const handleStopToNext=(curPageIndex)=>{}
           <div class="operationsWrapper">
             <!-- 等待中 -->
             <div
-              class="operationsContent "
+              class="operationsContent"
               v-if="scope.row.buildStatus === '等待中'"
             >
-              <el-button 
+              <el-button
                 link
                 type="primary"
                 size="small"
@@ -160,7 +170,7 @@ const handleStopToNext=(curPageIndex)=>{}
                 link
                 type="primary"
                 size="small"
-                :disabled="scope.$index?false:true"
+                :disabled="scope.$index ? false : true"
                 @click="handleMoveUp(scope.$index)"
               >
                 <img
@@ -175,7 +185,12 @@ const handleStopToNext=(curPageIndex)=>{}
                 link
                 type="primary"
                 size="small"
-                :disabled="(scope.$index===(waitingRowsLengthInAll-(currentPage-1)*pageSize-1))?true:false"
+                :disabled="
+                  scope.$index ===
+                  waitingRowsLengthInAll - (currentPage - 1) * pageSize - 1
+                    ? true
+                    : false
+                "
                 @click="handleMoveDown(scope.$index)"
               >
                 <img
@@ -189,7 +204,7 @@ const handleStopToNext=(curPageIndex)=>{}
             </div>
             <!-- 执行中 -->
             <div
-              class="operationsContent "
+              class="operationsContent"
               v-if="scope.row.buildStatus === '执行中'"
             >
               <!-- <el-button
@@ -257,9 +272,8 @@ const handleStopToNext=(curPageIndex)=>{}
     border-radius: 50%;
     color: white;
   }
-  .--buildStatus-color--finished{
-    color:#1DC872;
-;
+  .--buildStatus-color--finished {
+    color: #1dc872;
   }
   .is-loading {
     background-color: #409eff;
@@ -271,18 +285,18 @@ const handleStopToNext=(curPageIndex)=>{}
     background-color: lightgreen;
   }
 }
-.operationsWrapper{
-  .operationsContent{
-    .el-button+.el-button{
+.operationsWrapper {
+  .operationsContent {
+    .el-button + .el-button {
       margin: auto;
-    //  margin:0;
+      //  margin:0;
     }
   }
 }
-:deep(.el-button.is-link){
+:deep(.el-button.is-link) {
   padding: 4px;
 }
-:deep(.el-table__body colgroup col:nth-child(3)){
+:deep(.el-table__body colgroup col:nth-child(3)) {
   font-size: 10px;
 }
 .icon {
