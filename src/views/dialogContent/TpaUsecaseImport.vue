@@ -2,28 +2,28 @@
 import { Search } from "@element-plus/icons-vue";
 import { ref } from "vue";
 
-import Tree from "../../components/Tree.vue"
+import Tree from "../../components/Tree.vue";
 // import HiTree from "../../components/HiTree.vue"
 
 const searchInput = ref("");
 
 const treeData = ref([
-  { id: 1, label: 'hello', children: [] },
-  { id: 2, label: 'world', children: [] },
-  { id: 3, label: 'yes', children: [] },
-  { id: 4, label: 'or no', children: [] }
-])
+  { id: 1, label: "hello", children: [] },
+  { id: 2, label: "world", children: [] },
+  { id: 3, label: "yes", children: [] },
+  { id: 4, label: "or no", children: [] },
+]);
 const role = ref({
   enableFolderAdd: true,
   enableFolderEdit: true,
-  enableFolderDelete: true
-})
+  enableFolderDelete: true,
+});
 
-const folderExpand=ref(true);
-const defaultProps=ref({
-  children: 'children',
-  label: 'label'
-})
+const folderExpand = ref(true);
+const defaultProps = ref({
+  children: "children",
+  label: "label",
+});
 </script>
 
 <template>
@@ -63,22 +63,17 @@ const defaultProps=ref({
         </div>
       </div>
       <div class="content__main">
-        内容区
         <!-- <HiTree 
         :treeData="treeData" :role="role"
         :defaultProps="defaultProps"
         :folderExpand="folderExpand"
         /> -->
-        
-        <Tree 
-        :treeData="treeData"
-      
-        :defaultProps="defaultProps"
-        :folderExpand="folderExpand"
-        />
 
+        <!-- :treeData="treeData" -->
+        <!-- :defaultProps="defaultProps"
+        :folderExpand="folderExpand" -->
+        <Tree />
       </div>
-
 
       <div class="content__buttons">
         <!-- <button class="cancel">Cancel</button>
@@ -131,7 +126,8 @@ const defaultProps=ref({
     flex-direction: column;
     // width: 1500px;
     width: 80vw;
-    height: 744px;
+    // height: 744px;
+    height: fit-content;
     gap: 0px;
     opacity: 0px;
     .content__function {
@@ -139,7 +135,7 @@ const defaultProps=ref({
       align-items: center;
       justify-content: space-between;
       width: 100%;
-    //   width: 1500px;
+      //   width: 1500px;
       //   height: 40px;
       height: fit-content;
       gap: 0px;
@@ -211,8 +207,8 @@ const defaultProps=ref({
     }
     .content__main {
       flex: 1;
-    //   width: 1500px; 
-      width: 100%; 
+      //   width: 1500px;
+      width: 100%;
       //   height: 648px; //Fill (648px)px
       gap: 0px;
       border: 1px 0px 0px 0px;
@@ -223,7 +219,7 @@ const defaultProps=ref({
       display: flex;
       justify-content: flex-end;
       align-items: center;
-    //   width: 1500px;
+      //   width: 1500px;
       width: 100%;
       height: 56px;
       padding: 8px 0px 8px 0px;
