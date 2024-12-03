@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 
 import TaskTable from "../components/TaskTable.vue";
 import DynamicForm from "../components/DynamicForm.vue";
-import TpaUsecaseImport from "../components/TpaUsecaseImport.vue";
+import TpaUsecaseImport from "./dialogContent/TpaUsecaseImport.vue";
 
 export interface IData {
   id: string;
@@ -21,9 +21,9 @@ export interface IData {
 // 模拟获取分页数据（可替换为真实的后端 API 调用）
 const allData = ref(
   Array.from({ length: 100 }, (_, index) => ({
-    id: `${index + 1}`,
-    start: `2024-11-${(index % 30) + 1}`,
-    finish: `2025-11-${(index % 30) + 1}`,
+    id: `A0${index + 1}`,
+    start: `2024-11-${(index % 30) + 1} 00:00:00`,
+    finish: `2025-11-${(index % 30) + 1} 00:00:00`,
     convertUsecaseCount: Math.floor(Math.random() * 100),
     usecaseSource: `source-${index + 1}`,
     targetPosition: `target-${index + 1}`,
@@ -57,6 +57,7 @@ const sortedAllTableData = computed(() => {
   ];
   return res;
 });
+
 const fetchTableData = (page: number, size: number) => {
   const startIndex = (page - 1) * size;
   const endIndex = startIndex + size;
@@ -101,10 +102,10 @@ const handleCommand = (command: string) => {
     {
       label: "目标路径",
       key: "targetPath",
-      // type: "select",
-      type: "folder",
+      type: "select",
+      // type: "folder",
       placeholder: "请选择目标路径",
-      // options,
+      options,
     },
   ];
   const byTestManagementFields = [
@@ -117,7 +118,7 @@ const handleCommand = (command: string) => {
     },
     {
       label: "项目名称",
-      key: "usecaseSource",
+      key: "projectName",
       type: "select",
       placeholder: "请选择项目名称",
       options,
@@ -145,26 +146,28 @@ const handleClose = (done: () => void) => {
 const isConversionScopeShown = ref(false);
 
 const formData = ref(null);
-const hasChanged = (formVal: { [key: string]: string | object } | null) => {
-  console.log("update方法之执行======", formVal);
+const onSourceFileSelect = (formVal: { [key: string]: string | object } | null) => {
   formData.value = formVal;
   console.log("formData======", formData.value);
-
-  // console.log('update方法之执行======',typeof(value));
   if (formData.value.usecaseFile) isConversionScopeShown.value = true;
 };
+const onOptionSelect=(option: string|number|object)=>{
+console.log("目标文件目录 选择",option);
+
+}
 
 const tableData = ref([]); // 当前页数据
-const total = ref(1000); // 总条目数
+const length=computed(()=>sortedAllTableData.value.length)
+const total = ref(length); // 总条目数
 const currentPage = ref(1); // 当前页码
 const pageSize = ref(20); // 每页条数
 const pageSizes = ref([20, 40, 60, 80]);
-
 // const size = ref<ComponentSize>("default");//页码形状大小
 // const background = ref(false);
 // const disabled = ref(false);
+
 // 初始化数据
-fetchTableData(currentPage.value, pageSize.value);
+onMounted(()=>fetchTableData(currentPage.value, pageSize.value))
 
 // 页码变化处理
 const handlePageChange = (page: number) => {
@@ -187,7 +190,8 @@ const deleteRow = (index: number) => {
   allData.value.splice(index, 1);
   fetchTableData(currentPage.value, pageSize.value); //重新获取数据
 };
-//更改index
+
+//上移下移操作：更改index
 const handleIndexUpdate = (curIndex: number, changedIndex: number) => {
   console.log("父组件接受的index", curIndex);
   // 交换当前项和上/下一项
@@ -200,6 +204,8 @@ const handleIndexUpdate = (curIndex: number, changedIndex: number) => {
 };
 
 // const isClearForm=ref(false);
+
+//确认关闭对话框前：记录并保存form数据
 const onConfirm = () => {
   dialogVisible.value = false; //关闭对话框
   //todo: 数据展示在table中
@@ -210,7 +216,7 @@ const onConfirm = () => {
 
   const convertUsecaseCount = formData.value.convertUsecaseCount;
   const usecaseSource = formData.value.usecaseFile;
-  const targetPosition = formData.value.usecaseFile; //todo
+  const targetPosition = formData.value.targetPath; //todo
   const buildStatus = "已完成"; //todo
   const operation = [""];
   const id = formData.value.taskId;
@@ -235,7 +241,7 @@ const onConfirm = () => {
 const innerVisible = ref(false);
 const onNext = () => {
   console.log("next ");
-  innerVisible.value = true; //dakai
+  innerVisible.value = true; //打开下一个对话框
 };
 
 const handleCloseInner = (done: () => void) => {
@@ -251,8 +257,12 @@ const handleCloseInner = (done: () => void) => {
 
 <template>
   <div class="home-warpper" id="home">
-    <div class="header">
-      <div class="header__title">任务记录</div>
+    <div class="header">  
+      <div class="header__left --flex-center">
+        <img src="../assets/bigAIIcon.svg" alt="ai logo" class="header__icon">
+        <div class="header__title">任务记录</div>
+      </div>
+      
       <div class="header__btn --flex-center">
         <!-- inert -->
         <el-dropdown @command="handleCommand" class="header__btn__create">
@@ -291,7 +301,8 @@ const handleCloseInner = (done: () => void) => {
       <!-- :isClearForm="isClearForm" -->
       <DynamicForm
         :fields="dynamicForm"
-        @update:modelValue="(formData) => hasChanged(formData)"
+        @update:formDataValue="(formData) => onSourceFileSelect(formData)"
+        @update:selectedOption="(option) => onOptionSelect(option)"
       >
         <!-- 插入动态内容 -->
         <template #selectExtra>
@@ -327,7 +338,6 @@ const handleCloseInner = (done: () => void) => {
           </div>
         </template>
       </DynamicForm>
-
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">Cancel</el-button>
@@ -402,16 +412,22 @@ const handleCloseInner = (done: () => void) => {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    height: 60px;
+    height: 40px;
 
     // position: sticky;
     // /* 吸顶效果 */
     // top: 0;
     // z-index: 100; /* 保证在其他内容之上 */
+    .header__left{
 
-    .header__title {
-      font-weight: bolder;
+      .header__icon{
+      width: 50px;
+      }
+      .header__title {
+        font-weight: bolder;
+      }
     }
+
     .header__btn {
       &__create {
         margin-right: 0.5rem;

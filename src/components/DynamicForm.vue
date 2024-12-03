@@ -9,6 +9,7 @@
           v-model="formData[field.key]"
           :placeholder="field.placeholder"
           :disabled="field?.disabled"
+          clearable
         />
         <!-- <el-upload
           v-if="field.type === 'file'"
@@ -39,7 +40,8 @@
           />
         </div>
 
-        <div
+        <!-- folder选项 -->
+        <!-- <div
           v-else-if="field.type === 'folder'"
           class="el-form-item__content el-input el-input__wrapper --flex-center"
           tabindex="-1"
@@ -54,9 +56,8 @@
             @change="handleFolderSelect"
             webkitdirectory
           />
-        </div>
-        <!-- style="opacity: 0" -->
-        <!-- v-model="formData[field.key]" -->
+        </div> -->
+  
         <!-- <el-input
           v-else-if="field.type === 'folder'"
           type="file"
@@ -72,7 +73,8 @@
           v-model="formData[field.key]"
           :placeholder="field.placeholder"
           :options="field.options"
-          @change="handleChange"
+          @change="handleSelect"
+          clearable
         >
           <!-- <el-option
                 v-for="option in field.options"
@@ -87,11 +89,6 @@
         <slot name="selectExtra"></slot>
       </template>
 
-      <!-- 显示解析的编号范围 -->
-      <!-- <el-form-item label="编号范围"> -->
-      <!-- {{ formData.ranges }} -->
-      <!-- <el-input v-model="formData.ranges" placeholder="编号范围" disabled /> -->
-      <!-- </el-form-item> -->
     </template>
   </el-form>
 </template>
@@ -100,7 +97,6 @@
 import { computed, inject, reactive, ref, watch } from "vue";
 import * as XLSX from "xlsx";
 import dayjs from 'dayjs'
-
 
 // import type{IBuildStatus }from "@/types"
 import { BuildStatus } from "../config";
@@ -112,8 +108,9 @@ const props = defineProps({
 // const emits = defineEmits(["update"]);
 interface IEmits {
   (e: "resetFormData"): void;
-  (e: "update:modelValue", value?: string | number): void;
+  (e: "update:formDataValue", value?: string | number|object): void;
   (e: "inputClick"): void;
+  (e:"update:selectedOption",value?: string | number|object):void
 }
 const emits = defineEmits<IEmits>();
 
@@ -152,7 +149,7 @@ export interface ISheetRange {
   sheetName: String;
   range: String;
 }
-// const formData = reactive({});
+
 // enum BuildStatus {
 //   Waiting,
 //   Execting,
@@ -238,20 +235,18 @@ const handleFileSelect = (event: Event) => {
       }
       formData.convertUsecaseCount=count;
       console.log("formdatada", formData);
-      emits("update:modelValue", formData);
+      emits("update:formDataValue", formData);
     });
   };
 
   // 读取文件为 ArrayBuffer（二进制数据）
   reader.readAsArrayBuffer(file);
-
-  //确定用例文件
 };
 
 const initStatus: BuildStatus = ref(BuildStatus.Waiting); //初始状态
 
-const handleChange = (usecaseFile: string) => {
-  emits("update:modelValue", usecaseFile); //确定用例文件
+const handleSelect= (option: string|number|object) => {
+  emits("update:selectedOption", option); 
 
   // excelParse(usecaseFile); //解析excel文件
 };

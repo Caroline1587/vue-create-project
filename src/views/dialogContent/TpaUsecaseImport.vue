@@ -1,7 +1,29 @@
 <script setup lang="ts">
 import { Search } from "@element-plus/icons-vue";
 import { ref } from "vue";
-const input2 = ref("");
+
+import Tree from "../../components/Tree.vue"
+// import HiTree from "../../components/HiTree.vue"
+
+const searchInput = ref("");
+
+const treeData = ref([
+  { id: 1, label: 'hello', children: [] },
+  { id: 2, label: 'world', children: [] },
+  { id: 3, label: 'yes', children: [] },
+  { id: 4, label: 'or no', children: [] }
+])
+const role = ref({
+  enableFolderAdd: true,
+  enableFolderEdit: true,
+  enableFolderDelete: true
+})
+
+const folderExpand=ref(true);
+const defaultProps=ref({
+  children: 'children',
+  label: 'label'
+})
 </script>
 
 <template>
@@ -15,8 +37,6 @@ const input2 = ref("");
     <div class="content">
       <div class="content__function">
         <div class="content__function__selectedCount">
-          <!-- <input type="select" /> -->
-          <!-- 下拉框 -->
           <div class="selectedContent">已选234项测试用例</div>
         </div>
         <div class="content__function__searchNFilter">
@@ -30,7 +50,7 @@ const input2 = ref("");
             <span>搜索内容</span> -->
             <el-input
               class="search-input"
-              v-model="input2"
+              v-model="searchInput"
               style="width: 240px"
               placeholder="搜索内容"
               :prefix-icon="Search"
@@ -42,7 +62,24 @@ const input2 = ref("");
           </div>
         </div>
       </div>
-      <div class="content__main">内容区</div>
+      <div class="content__main">
+        内容区
+        <!-- <HiTree 
+        :treeData="treeData" :role="role"
+        :defaultProps="defaultProps"
+        :folderExpand="folderExpand"
+        /> -->
+        
+        <Tree 
+        :treeData="treeData"
+      
+        :defaultProps="defaultProps"
+        :folderExpand="folderExpand"
+        />
+
+      </div>
+
+
       <div class="content__buttons">
         <!-- <button class="cancel">Cancel</button>
         <button class="ok">OK</button> -->
@@ -92,7 +129,8 @@ const input2 = ref("");
   .content {
     display: flex;
     flex-direction: column;
-    width: 1500px;
+    // width: 1500px;
+    width: 80vw;
     height: 744px;
     gap: 0px;
     opacity: 0px;
@@ -100,8 +138,8 @@ const input2 = ref("");
       display: flex;
       align-items: center;
       justify-content: space-between;
-
-      width: 1500px;
+      width: 100%;
+    //   width: 1500px;
       //   height: 40px;
       height: fit-content;
       gap: 0px;
@@ -173,7 +211,8 @@ const input2 = ref("");
     }
     .content__main {
       flex: 1;
-      width: 1500px; //Fill (1,500px)px
+    //   width: 1500px; 
+      width: 100%; 
       //   height: 648px; //Fill (648px)px
       gap: 0px;
       border: 1px 0px 0px 0px;
@@ -184,7 +223,8 @@ const input2 = ref("");
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      width: 1500px;
+    //   width: 1500px;
+      width: 100%;
       height: 56px;
       padding: 8px 0px 8px 0px;
       gap: 16px;

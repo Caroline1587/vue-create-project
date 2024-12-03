@@ -1,5 +1,5 @@
 export interface ITableColumnFields {
-  fielsd: ITableColumnField[];
+  fields: ITableColumnField[];
 }
 export interface ITableColumnField {
   label: string;

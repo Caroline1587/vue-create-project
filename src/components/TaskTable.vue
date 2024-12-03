@@ -54,7 +54,9 @@ const handleMoveDown=(curPageIndex)=>{
   }
 
 }
-const handleStop=(curPageIndex)=>{}
+const handleStop=(curPageIndex)=>{
+  
+}
 const handleStopToNext=(curPageIndex)=>{}
 
 // const buildStatusContentColor=computed(()=>{
@@ -77,18 +79,26 @@ const handleStopToNext=(curPageIndex)=>{}
       style="width: 100%"
     >
       <el-table-column type="index" fixed />
-      <el-table-column prop="id" label="任务编号" />
-      <el-table-column prop="start" label="开始时间" />
-      <el-table-column prop="finish" label="完成时间" />
-      <el-table-column prop="convertUsecaseCount" label="转换用例数" />
+      <el-table-column prop="id" label="任务编号" class="任务编号" />
+      <el-table-column prop="start" label="开始时间" >
+        <template #default="{ row }">
+          <span :style="{ fontSize: '12px' }">{{ row.start }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="finish" label="完成时间" >
+        <template #default="{ row }">
+          <span :style="{ fontSize: '12px' }">{{ row.finish }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="convertUsecaseCount" label="转换用例数"  show-overflow-tooltip/>
       <el-table-column
         prop="usecaseSource"
         label="用例来源"
         show-overflow-tooltip
       />
-      <el-table-column prop="targetPosition" label="目标位置" />
+      <el-table-column prop="targetPosition" label="目标位置" show-overflow-tooltip/>
       <!-- sortable -->
-      <el-table-column prop="buildStatus" label="生成状态">
+      <el-table-column prop="buildStatus" label="生成状态" >
         <template #default="scope">
           <!-- <el-button type="primary" size="small" text loading>{{scope.row.buildStatus}}</el-button> -->
           <!-- <el-icon><RefreshRight /></el-icon> -->
@@ -122,16 +132,15 @@ const handleStopToNext=(curPageIndex)=>{}
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right" min-width="120">
+      <el-table-column label="操作" fixed="right" min-width="100">
         <template #default="scope">
           <!-- todo： 根据 buildStatus 动态调整可执行操作 -->
           <div class="operationsWrapper">
             <!-- 等待中 -->
             <div
-              class="operationsContent"
+              class="operationsContent "
               v-if="scope.row.buildStatus === '等待中'"
             >
-
               <el-button 
                 link
                 type="primary"
@@ -147,7 +156,6 @@ const handleStopToNext=(curPageIndex)=>{}
                 />
                 取消</el-button
               >
-
               <el-button
                 link
                 type="primary"
@@ -181,7 +189,7 @@ const handleStopToNext=(curPageIndex)=>{}
             </div>
             <!-- 执行中 -->
             <div
-              class="operationsContent"
+              class="operationsContent "
               v-if="scope.row.buildStatus === '执行中'"
             >
               <!-- <el-button
@@ -250,7 +258,8 @@ const handleStopToNext=(curPageIndex)=>{}
     color: white;
   }
   .--buildStatus-color--finished{
-    color: green;
+    color:#1DC872;
+;
   }
   .is-loading {
     background-color: #409eff;
@@ -261,6 +270,20 @@ const handleStopToNext=(curPageIndex)=>{}
   .isFinished {
     background-color: lightgreen;
   }
+}
+.operationsWrapper{
+  .operationsContent{
+    .el-button+.el-button{
+      margin: auto;
+    //  margin:0;
+    }
+  }
+}
+:deep(.el-button.is-link){
+  padding: 4px;
+}
+:deep(.el-table__body colgroup col:nth-child(3)){
+  font-size: 10px;
 }
 .icon {
   height: 1em;
