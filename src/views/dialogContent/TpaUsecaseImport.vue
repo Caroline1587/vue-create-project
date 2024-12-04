@@ -40,24 +40,16 @@ const defaultProps = ref({
           <div class="selectedContent">已选234项测试用例</div>
         </div>
         <div class="content__function__searchNFilter">
-          <!-- <div class="searchUnfold">
-            input搜索框
-            <img class="searchIcon" src="../assets/search.svg" alt="" />
-            <span>搜索内容</span>
-          </div> -->
           <div class="searchfold">
-            <!-- <img class="searchIcon" src="../assets/search.svg" alt="" />
-            <span>搜索内容</span> -->
             <el-input
               class="search-input"
               v-model="searchInput"
-              style="width: 240px"
               placeholder="搜索内容"
               :prefix-icon="Search"
             />
           </div>
           <div class="advancedFilter">
-            <img class="filterIcon" src="../assets/filter.svg" alt="" />
+            <img class="filterIcon" src="../../assets/filter.svg" alt="" />
             <span>高级筛选</span>
           </div>
         </div>
@@ -75,12 +67,10 @@ const defaultProps = ref({
         <Tree />
       </div>
 
-      <div class="content__buttons">
-        <!-- <button class="cancel">Cancel</button>
-        <button class="ok">OK</button> -->
+      <!-- <div class="content__buttons">
         <el-button class="cancel">Cancel</el-button>
         <el-button class="ok" type="primary">OK</el-button>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -93,7 +83,7 @@ const defaultProps = ref({
       justify-content: flex-start;
       align-items: center;
       width: fit-content; //Hug (172px)px
-      height: 29px; // Hug (29px)px
+      height: 29px; 
       box-sizing: border-box;
       padding: 0px 0px 0px 43px;
       gap: 8px;
@@ -145,17 +135,6 @@ const defaultProps = ref({
         height: 17px;
         gap: 16px;
         opacity: 0px;
-        // .content__function__selectedCount input {
-        //   width: 280px;
-        //   height: 40px;
-        //   padding: 8px 16px 8px 16px;
-        //   gap: 0px;
-        //   border-radius: 6px 0px 0px 0px;
-        //   border: 1px 0px 0px 0px;
-        //   justify: space-between;
-        //   opacity: 0px;
-        //   border: 1px solid #e1e1e1;
-        // }
         .selectedContent {
           width: 110px;
           height: 17px;
@@ -176,7 +155,7 @@ const defaultProps = ref({
         // height: 40px;
         height: fit-content;
         opacity: 0px;
-        gap: 32px;
+        // gap: 32px;
         .searchUnfold {
           height: 40px;
           padding: 2.86px 12.86px 2.86px 12.86px;
@@ -191,18 +170,18 @@ const defaultProps = ref({
           justify-content: center;
           align-items: center;
 
-          width: 120px;
+          // width: 120px;
           height: 32px;
           gap: 5px;
         }
         // .searchIcon,
-        // .filterIcon {
-        //   //   width: 24px;
-        //   //   height: 24px;
-        //   //   padding: 3.57px 4px 4.43px 4px;
-        //   //   gap: 0px;
-        //   //   opacity: 0px;
-        // }
+        .filterIcon {
+            max-width: 24px;
+            max-height: 24px;
+          //   padding: 3.57px 4px 4.43px 4px;
+          //   gap: 0px;
+          //   opacity: 0px;
+        }
       }
     }
     .content__main {

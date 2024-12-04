@@ -373,14 +373,14 @@ const handleCloseInner = (done: () => void) => {
         </div>
       </template>
       <TpaUsecaseImport />
-      <!-- <template #footer>
+      <template #footer>
         <div class="dialog-footer">
           <el-button @click="innerVisible = false">Cancel</el-button>
           <el-button type="primary" @click="innerVisible = false">
             Ok
           </el-button>
         </div>
-      </template> -->
+      </template>
     </el-dialog>
 
     <TaskTable

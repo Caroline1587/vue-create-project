@@ -236,6 +236,10 @@ const handleSelect = (option: string | number | object) => {
   height: inherit;
   color: red;
 }
+:deep(.el-form-item__label){
+  max-width: 120px !important;
+  background-color: red;
+}
 .input-file-self {
   width: auto;
   opacity: 0;

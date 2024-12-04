@@ -3,7 +3,6 @@
     <div class="treeContainer">
       <el-input
         v-model="filterText"
-        style="width: 240px"
         placeholder="Filter keyword"
       />
       <!-- :load="loadNode"
@@ -46,12 +45,12 @@
     <div class="tableContainer">
       <el-table
         :data="tableData"
-        style="width: 100%"
+        style="width: 100%" max-height="50vh"
         border
         @selection-change="handleSelectionChange"
       >
         <!-- 表格的多选框 -->
-        <el-table-column type="selection" width="55px" />
+        <el-table-column type="selection" width="50px" fixed/>
         <!-- 数据列 -->
         <el-table-column
           v-for="column in columns"
@@ -171,9 +170,9 @@ const treeData = ref<TreeNodeData[]>([
 // 表格数据与列配置
 const tableData = ref([]);
 const columns = ref([
-  { prop: "number", label: "用例编号", minWidth: "20%" },
-  { prop: "name", label: "用例名称", minWidth: "60%" },
-  { prop: "priority", label: "优先级", minWidth: "10%" },
+  { prop: "number", label: "用例编号", minWidth: "20%",width:"160px" },
+  { prop: "name", label: "用例名称", minWidth: "60%"},
+  { prop: "priority", label: "优先级", minWidth: "10%",width:"100px" },
 ]);
 
 // 选中节点的回调
@@ -185,13 +184,18 @@ const handleCheckChange = (
   console.log("handleCheckChange", data, checked, indeterminate);
   if (checked) {
     console.log("选中节点:", data);
-    // todo: 根据节点 ID 请求后端数据 async
+    // ======todo: 根据节点 ID 请求后端数据 async
     // const response = await axios.get(`/api/data/${data.id}`);
     const response = {
       data: [
         { number: "aw1", name: "知道，前方无目标车", priority: "低" },
         { number: "aw2", name: "知道，前方无目标车", priority: "高" },
         { number: "aw3", name: "知道，前方无目标车", priority: "低" },
+        { number: "aw34", name: "知道，前方无目标车", priority: "高" },
+        { number: "aw34", name: "知道，前方无目标车", priority: "高" },
+        { number: "aw34", name: "知道，前方无目标车", priority: "高" },
+        { number: "aw34", name: "知道，前方无目标车", priority: "高" },
+        { number: "aw34", name: "知道，前方无目标车", priority: "高" },
         { number: "aw34", name: "知道，前方无目标车", priority: "高" },
       ],
     };
@@ -302,25 +306,30 @@ const handleSave = (node: Node, newData: TreeNodeData) => {
 
 <style lang="scss" scoped>
 .allContainer {
+  width: 100%;
   display: flex;
 
   .treeContainer {
     display: flex;
     flex-direction: column;
     flex: 2;
-    flex-shrink: 1; //收缩
   }
   .tableContainer {
     flex: 8;
-    flex-shrink: 1; //收缩
+    overflow:auto;
+    max-width: 800px;
+    max-height: 100%;
+    :deep(.el-table__header-wrapper){
+      // min-width: 220px;
+    }
   }
 }
 
-.tree_node {
-  cursor: pointer;
-}
+// .tree_node {
+//   cursor: pointer;
+// }
 
-.tree_node.is-current {
-  color: #409eff;
-}
+// .tree_node.is-current {
+//   color: #409eff;
+// }
 </style>

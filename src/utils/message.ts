@@ -1,6 +1,6 @@
 import { ElMessage, MessageOptions } from 'element-plus'
 
-export function message (message: string, option?:MessageOptions) {
+export function successMessage (message: string, option?:MessageOptions) {
   ElMessage({ message, ...option, type: 'success', duration: 3 * 1000, offset: 48 })
 }
 export function warningMessage (message: string, option?:MessageOptions) {
