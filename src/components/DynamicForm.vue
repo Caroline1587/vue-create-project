@@ -6,7 +6,7 @@
       <el-form-item :label="field.label">
         <el-input
           v-if="field.type === 'input'"
-          v-model="formData[field.key]"
+          v-model="formData[field.value]"
           :placeholder="field.placeholder"
           :disabled="field?.disabled"
           clearable
@@ -21,7 +21,7 @@
         /> -->
 
         <div
-          v-else-if="field.type === 'file' && field.key === 'usecaseFile'"
+          v-else-if="field.type === 'file' && field.value === 'excelPath'"
           class="el-form-item__content el-input el-input__wrapper --flex-center"
           tabindex="-1"
         >
@@ -38,34 +38,20 @@
           />
         </div>
 
-        <!-- <el-input
-          v-else-if="field.type === 'folder'"
-          type="file"
-          :placeholder="field.placeholder"
-          webkitdirectory
-          directory
-          @change="handleFolderChange"
-        >
-        </el-input> -->
-
         <el-select-v2
           v-else-if="field.type === 'select'"
-          v-model="formData[field.key]"
+          v-model="formData[field.value]"
           :placeholder="field.placeholder"
           :options="field.options"
-          @change="handleSelect"
+          filterable
           clearable
+          @change="onSelected"
+          @focus="onSelectFocused"
         >
-          <!-- <el-option
-                v-for="option in field.options"
-                :key="option"
-                :label="option"
-                :value="option"
-              /> -->
         </el-select-v2>
       </el-form-item>
-      <!-- 如果当前字段是usecaseFile，后面显示插槽内容 -->
-      <template v-if="field.key === 'usecaseFile'">
+      <!-- 如果当前字段是excelPath，后面显示插槽内容 -->
+      <template v-if="field.value === 'excelPath'">
         <slot name="selectExtra"></slot>
       </template>
     </template>
@@ -77,9 +63,6 @@ import { computed, inject, reactive, ref, watch } from "vue";
 import * as XLSX from "xlsx";
 import dayjs from "dayjs";
 
-// import type{IBuildStatus }from "@/types"
-import { BuildStatus } from "../config";
-
 const props = defineProps({
   fields: Array,
   // isClearForm:Boolean
@@ -88,7 +71,7 @@ const props = defineProps({
 interface IEmits {
   (e: "resetFormData"): void;
   (e: "update:formDataValue", value?: string | number | object): void;
-  (e: "inputClick"): void;
+  // (e: "inputClick"): void;
   (e: "update:selectedOption", value?: string | number | object): void;
 }
 const emits = defineEmits<IEmits>();
@@ -118,9 +101,12 @@ const emits = defineEmits<IEmits>();
 // let isClear=ref(false);
 // isClear.value=inject("clearForm");
 // 用来存储解析后的文件数据
+
 const formData = reactive({
+  taskId: 9090,
   ranges: [], // 假设我们要提取“编号范围”数据并显示
-  convertUsecaseCount: 0, //
+  converted_case_num: 0, //
+  case_source: 1, //excel
 });
 
 export interface ISheetRange {
@@ -128,18 +114,7 @@ export interface ISheetRange {
   range: String;
 }
 
-// enum BuildStatus {
-//   Waiting,
-//   Execting,
-//   Finished,
-// }
-
-const handleFolderSelect = () => {
-  console.log("folder select");
-};
-
 const selectedFile = ref<String | null>(null);
-const selectedFolder = ref<String | null>(null);
 
 // 上传前的钩子，检查文件类型
 // const beforeUpload = (file: File) => {
@@ -161,7 +136,7 @@ const handleFileSelect = (event: Event) => {
     console.error("No files selected");
     return;
   }
-  formData["usecaseFile"] = inputElement.value;
+  formData["excelPath"] = inputElement.value;
 
   const file = inputElement.files[0]; // 获取选中的文件
   if (!file) {
@@ -211,7 +186,7 @@ const handleFileSelect = (event: Event) => {
           `Sheet ${sheetName} does not have the "编号范围" column.`
         );
       }
-      formData.convertUsecaseCount = count;
+      formData.converted_case_num = count;
       console.log("formdatada", formData);
       emits("update:formDataValue", formData);
     });
@@ -221,22 +196,28 @@ const handleFileSelect = (event: Event) => {
   reader.readAsArrayBuffer(file);
 };
 
-const initStatus: BuildStatus = ref(BuildStatus.Waiting); //初始状态
+//todo:
+//当选择器的输入框获得焦点时触发，加载options选项
+const onSelectFocused = () => {};
 
-const handleSelect = (option: string | number | object) => {
+/**
+ * todo：select选项，调对应接口
+ *
+ * @param option
+ */
+const onSelected = (option: string | number | object) => {
   emits("update:selectedOption", option);
 
-  // excelParse(usecaseFile); //解析excel文件
+  // excelParse(case_source); //解析excel文件
 };
 </script>
 <style lang="scss" scoped>
 ::-webkit-file-upload-button {
   font-size: inherit;
-  // font-stretch: narrower;
   height: inherit;
   color: red;
 }
-:deep(.el-form-item__label){
+:deep(.el-form-item__label) {
   max-width: 120px !important;
   background-color: red;
 }

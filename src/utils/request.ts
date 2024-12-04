@@ -1,11 +1,11 @@
 import axios from "axios";
 import { getAccessToken } from "@/utils/auth";
-import type {IResponse} from "@/types"
-import {successMessage,warningMessage} from "./message"
+import type { IResponse } from "@/types";
+import { successMessage, warningMessage } from "./message";
 
 const service = axios.create({
   baseURL: "/api",
-  timeout: 5000,
+  // timeout: 5000,
 });
 
 service.interceptors.request.use(
@@ -26,9 +26,10 @@ service.interceptors.request.use(
 );
 
 service.interceptors.response.use(
-  ({code,msg,data}: IResponse) => {
-    if(20001==code) warningMessage(msg);//异常信息提示
-    if(20000==code) successMessage(msg);//任务创建成功、获取所有任务成功、任务取消成功
+  (response: IResponse) => {
+    const { code, msg, data } = response.json();
+    if (20001 == code) warningMessage(msg); //异常信息提示
+    if (20000 == code) successMessage(msg); //任务创建成功、获取所有任务成功、任务取消成功
     return data;
   },
   (error) => {

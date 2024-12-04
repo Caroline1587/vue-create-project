@@ -80,33 +80,33 @@ const handleStopToNext = (curPageIndex) => {};
     >
       <el-table-column type="index" fixed />
       <el-table-column prop="id" label="任务编号" />
-      <el-table-column prop="start" label="开始时间">
+      <el-table-column prop="create_time" label="开始时间">
         <template #default="{ row }">
-          <span :style="{ fontSize: '12px' }">{{ row.start }}</span>
+          <span :style="{ fontSize: '12px' }">{{ row.create_time }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="finish" label="完成时间">
+      <el-table-column prop="finish_time" label="完成时间">
         <template #default="{ row }">
-          <span :style="{ fontSize: '12px' }">{{ row.finish }}</span>
+          <span :style="{ fontSize: '12px' }">{{ row.finish_time }}</span>
         </template>
       </el-table-column>
       <el-table-column
-        prop="convertUsecaseCount"
+        prop="converted_case_num"
         label="转换用例数"
         show-overflow-tooltip
       />
       <el-table-column
-        prop="usecaseSource"
+        prop="case_source"
         label="用例来源"
         show-overflow-tooltip
       />
       <el-table-column
-        prop="targetPosition"
+        prop="target_location"
         label="目标位置"
         show-overflow-tooltip
       />
       <!-- sortable -->
-      <el-table-column prop="buildStatus" label="生成状态">
+      <el-table-column prop="generate_status" label="生成状态">
         <template #default="scope">
           <!-- <el-button type="primary" size="small" text loading>{{scope.row.buildStatus}}</el-button> -->
           <!-- <el-icon><RefreshRight /></el-icon> -->
@@ -114,30 +114,39 @@ const handleStopToNext = (curPageIndex) => {};
             <!-- todo： 根据 buildStatus 动态调整图标 -->
             <div
               class="buildStatusContent --flex-center --buildStatus-color--executing"
-              v-if="scope.row.buildStatus === '执行中'"
+              v-if="scope.row.generate_status === 1"
             >
               <el-icon class="is-loading --buildStatus-color--executing"
                 ><RefreshRight
               /></el-icon>
-              <span>{{ scope.row.buildStatus }}</span>
+              <span>执行中</span>
             </div>
             <div
               class="buildStatusContent --flex-center --buildStatus-color--waiting"
-              v-else-if="scope.row.buildStatus === '等待中'"
+              v-else-if="scope.row.generate_status === 0"
             >
               <el-icon class="isWaiting --buildStatus-color--waiting"
                 ><MoreFilled
               /></el-icon>
-              <span>{{ scope.row.buildStatus }}</span>
+              <span>等待中</span>
             </div>
             <div
               class="buildStatusContent --flex-center --buildStatus-color--finished"
-              v-else-if="scope.row.buildStatus === '已完成'"
+              v-else-if="scope.row.generate_status === 2"
             >
               <el-icon class="--buildStatus-color--finished"
                 ><SuccessFilled
               /></el-icon>
-              <span>{{ scope.row.buildStatus }}</span>
+              <span>已完成</span>
+            </div>
+            <div
+              class="buildStatusContent --flex-center --buildStatus-color--waiting"
+              v-else-if="scope.row.generate_status === 3"
+            >
+              <!-- <el-icon class="--buildStatus-color--waiting"
+                ><SuccessFilled
+              /></el-icon> -->
+              <span>已取消</span>
             </div>
           </div>
         </template>
@@ -149,7 +158,7 @@ const handleStopToNext = (curPageIndex) => {};
             <!-- 等待中 -->
             <div
               class="operationsContent"
-              v-if="scope.row.buildStatus === '等待中'"
+              v-if="scope.row.generate_status === 0"
             >
               <el-button
                 link
@@ -205,7 +214,7 @@ const handleStopToNext = (curPageIndex) => {};
             <!-- 执行中 -->
             <div
               class="operationsContent"
-              v-if="scope.row.buildStatus === '执行中'"
+              v-if="scope.row.generate_status === 1"
             >
               <!-- <el-button
                 link
@@ -227,9 +236,9 @@ const handleStopToNext = (curPageIndex) => {};
                   alt="stop icon"
                   srcset=""
                 />
-                停止</el-button
+                停止当前</el-button
               >
-              <el-button
+              <!-- <el-button
                 link
                 type="primary"
                 size="small"
@@ -242,7 +251,7 @@ const handleStopToNext = (curPageIndex) => {};
                   srcset=""
                 />
                 跳过并执行下一个</el-button
-              >
+              > -->
             </div>
           </div>
         </template>

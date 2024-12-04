@@ -1,10 +1,7 @@
 <template>
   <div class="allContainer">
     <div class="treeContainer">
-      <el-input
-        v-model="filterText"
-        placeholder="Filter keyword"
-      />
+      <el-input v-model="filterText" placeholder="Filter keyword" />
       <!-- :load="loadNode"
       lazy -->
       <el-tree
@@ -45,12 +42,13 @@
     <div class="tableContainer">
       <el-table
         :data="tableData"
-        style="width: 100%" max-height="50vh"
+        style="width: 100%"
+        max-height="50vh"
         border
         @selection-change="handleSelectionChange"
       >
         <!-- 表格的多选框 -->
-        <el-table-column type="selection" width="50px" fixed/>
+        <el-table-column type="selection" width="50px" fixed />
         <!-- 数据列 -->
         <el-table-column
           v-for="column in columns"
@@ -170,9 +168,9 @@ const treeData = ref<TreeNodeData[]>([
 // 表格数据与列配置
 const tableData = ref([]);
 const columns = ref([
-  { prop: "number", label: "用例编号", minWidth: "20%",width:"160px" },
-  { prop: "name", label: "用例名称", minWidth: "60%"},
-  { prop: "priority", label: "优先级", minWidth: "10%",width:"100px" },
+  { prop: "number", label: "用例编号", minWidth: "20%", width: "160px" },
+  { prop: "name", label: "用例名称", minWidth: "60%" },
+  { prop: "priority", label: "优先级", minWidth: "10%", width: "100px" },
 ]);
 
 // 选中节点的回调
@@ -316,10 +314,10 @@ const handleSave = (node: Node, newData: TreeNodeData) => {
   }
   .tableContainer {
     flex: 8;
-    overflow:auto;
-    max-width: 800px;
+    overflow: auto;
+    // max-width: 800px;
     max-height: 100%;
-    :deep(.el-table__header-wrapper){
+    :deep(.el-table__header-wrapper) {
       // min-width: 220px;
     }
   }

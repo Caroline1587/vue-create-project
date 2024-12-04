@@ -1,5 +1,6 @@
-export enum BuildStatus {
+export enum GenerateStatus {
   Waiting,
-  Execting,
-  Finished,
+  InProgress,
+  Completed,
+  Cancelled,
 }
