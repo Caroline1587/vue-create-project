@@ -2,8 +2,7 @@
 import { Search } from "@element-plus/icons-vue";
 import { ref } from "vue";
 
-import Tree from "../../components/Tree.vue";
-// import HiTree from "../../components/HiTree.vue"
+import Tree from "@/views/dialogContent/Tree.vue";
 
 const searchInput = ref("");
 
@@ -55,18 +54,8 @@ const defaultProps = ref({
         </div>
       </div>
       <div class="content__main">
-        <!-- <HiTree 
-        :treeData="treeData" :role="role"
-        :defaultProps="defaultProps"
-        :folderExpand="folderExpand"
-        /> -->
-
-        <!-- :treeData="treeData" -->
-        <!-- :defaultProps="defaultProps"
-        :folderExpand="folderExpand" -->
         <Tree />
       </div>
-
       <!-- <div class="content__buttons">
         <el-button class="cancel">Cancel</el-button>
         <el-button class="ok" type="primary">OK</el-button>

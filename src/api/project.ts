@@ -4,6 +4,7 @@ import type {
   IProjectsLinkStatus,
   ILinkedSequences,
 } from "@/types";
+import getMockData from "@/api/data"
 
 //## 路径等信息获取相关
 
@@ -20,5 +21,7 @@ export const getProjectsLinkStatus = (): IProjectsLinkStatus => {
 
 //项目列表展示信息获取
 export const getLinkedSequencesByTpaId = (): ILinkedSequences => {
-  return request.get("/tae/getLinkedSequencesByTpaId");
+
+    return getMockData();
+    return request.get("/tae/getLinkedSequencesByTpaId");
 };

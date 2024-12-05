@@ -2,6 +2,7 @@ import axios from "axios";
 import { getAccessToken } from "@/utils/auth";
 import type { IResponse } from "@/types";
 import { successMessage, warningMessage } from "./message";
+import { stringify } from "querystring";
 
 const service = axios.create({
   baseURL: "/api",
@@ -11,10 +12,22 @@ const service = axios.create({
 service.interceptors.request.use(
   (config) => {
     // 在请求发送之前对请求数据进行处理
-    const token = getAccessToken();
+    // const token = getAccessToken();
     // if (token) {
     //   config.headers["Authorization"] = `Bearer ${token}`; // 携带token
     // }
+    // 如果请求数据存在且不是 JSON 格式，转换为 JSON 格式
+
+    if (config.data && typeof config.data !== 'string') {
+      try {
+        config.data = JSON.stringify(config.data);
+      } catch (error) {
+        console.error("Failed to convert data to JSON:", error);
+      }
+    }
+    if (config.data) {
+      config.headers["Content-Type"] = "application/json";
+    }
 
     return config;
   },
@@ -27,8 +40,13 @@ service.interceptors.request.use(
 
 service.interceptors.response.use(
   (response: IResponse) => {
-    const { code, msg, data } = response.json();
-    if (20001 == code) warningMessage(msg); //异常信息提示
+    console.log(response.data);
+    const { code, msg, data } =response.data;//JSON.parse(response.data)
+    console.log("res-msg",msg);
+    if (20001 == code) {
+      warningMessage(msg);
+      return false;
+    } //异常信息提示
     if (20000 == code) successMessage(msg); //任务创建成功、获取所有任务成功、任务取消成功
     return data;
   },

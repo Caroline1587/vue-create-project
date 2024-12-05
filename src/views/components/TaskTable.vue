@@ -6,6 +6,7 @@ import {
   SuccessFilled,
   CircleClose,
 } from "@element-plus/icons-vue";
+import {cancelTask,cancelAllTask,moveUpByTaskId,moveDownByTaskId} from "@/api"
 
 // import type{ITableColumnFields} from "@/types"
 
@@ -36,6 +37,7 @@ const handleSizeChange = (size: number) => {
 };
 
 const handleCancel = (curPageIndex) => {};
+
 const handleMoveUp = (curPageIndex) => {
   console.log("currentPage====", props.currentPage);
 
@@ -57,6 +59,8 @@ const handleMoveDown = (curPageIndex) => {
     emits("update:index", index, nextIndex); // 通过事件将更新的数据传递给父组件
   }
 };
+
+
 const handleStop = (curPageIndex) => {};
 const handleStopToNext = (curPageIndex) => {};
 

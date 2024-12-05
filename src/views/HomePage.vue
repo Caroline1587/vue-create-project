@@ -12,9 +12,12 @@ import {
   cancelAllTask,
   moveUpByTaskId,
   moveDownByTaskId,
+  fetchTargetPath,
+  getProjectsLinkStatus,
+  getLinkedSequencesByTpaId
 } from "@/api/task";
-import TaskTable from "@/components/TaskTable.vue";
-import DynamicForm from "@/components/DynamicForm.vue";
+import TaskTable from "@/views/components/TaskTable.vue";
+import DynamicForm from "@/views/dialogContent/DynamicForm.vue";
 import TpaUsecaseImport from "@/views/dialogContent/TpaUsecaseImport.vue";
 import { ITask, ParamsToCreateTask } from "@/types";
 
@@ -115,17 +118,19 @@ const fetchTableData = (page: number, size: number) => {
   tableData.value = sortedAllTableData.value.slice(startIndex, endIndex);
 };
 
-// const innerVisible = ref(false);
+// const testManagementVisible = ref(false);
 
 const dynamicForm = ref([]);
 
-const dialogVisible = ref(false);
+const importDialog = ref<HTMLElement | null>(null);
+const importDialogVisible = ref(false);
 const commandTitle = ref("");
 const case_source = ref(0);
 
 //下拉框提供不同引入选项
 const handleCommand = (command: string) => {
-  dialogVisible.value = true; //打开对话框
+  importDialogVisible.value = true; //打开对话框
+  removeInert(importDialog.value);
   commandTitle.value = command;
   if (command == "excel") case_source.value = 1;
   else case_source.value = 2;
@@ -185,11 +190,19 @@ const handleCommand = (command: string) => {
 //清空select下拉框的值
 const clearOptionValue = () => {};
 
+const setInert=(element:HTMLElement|null)=>{
+  if(element && element instanceof HTMLElement) element.setAttribute("inert", "");//禁止交互
+}
+const removeInert=(element:HTMLElement|null)=>{
+  if(element && element instanceof HTMLElement) element.removeAttribute("inert");;//交互
+}
+
 //关闭dialog对话框前的操作
 const handleClose = (done: () => void) => {
   ElMessageBox.confirm("Are you sure to close this dialog?")
     .then(() => {
       clearOptionValue();
+      setInert(importDialog.value)
       done();
     })
     .catch(() => {
@@ -255,47 +268,60 @@ const handleIndexUpdate = (curIndex: number, changedIndex: number) => {
 
 // const isClearForm=ref(false);
 
-//确认关闭对话框前：记录并保存form数据
+//excel: 确认关闭对话框前：记录并保存form数据
+async function getCreateRes(params: ParamsToCreateTask){
+  let res=await createTask(params);
+  // console.log("创建成功时返回的数据",res);
+  
+  if(res) await fetchAllTableData();
+}
 const onConfirm = () => {
-  dialogVisible.value = false; //关闭对话框
+  importDialogVisible.value = false; //关闭对话框
+  setInert(importDialog.value)
   //todo: 数据展示在table中
   //todo:创建新任务======createTask(params)
   //- excel:
-  // const params: ParamsToCreateTask = {
-  //   case_number: formData.value.taskId,
-  //   converted_case_num: formData.value.converted_case_num,
-  //   target_location: formData.value.target_location,
-  //   case_source: case_source.value,
-  //   other_info:
-  //     case_source.value === 1 ? { excelPath: "" } : { linkedIdList: [""] },
+  const params: ParamsToCreateTask = {
+    case_number: formData.value.taskId,
+    converted_case_num: formData.value.converted_case_num,
+    target_location: formData.value.target_location,
+    case_source: formData.value.case_source,//1
+    other_info:
+    formData.value.case_source === 1 ? { excelPath: formData.value.excelPath } : { linkedIdList: [""] },
+  };
+  console.log("formdata====",formData.value);
+  
+  console.log("params===",params);
+  const res=getCreateRes(params);
+  const id=res[0].id;
+  console.log("创建成功时返回的数据",res);//[{"id":1}]
+  // const create_time = dayjs().format("YYYY-MM-DD HH:mm:ss"); //返回当前时间
+  // const finish_time = dayjs().endOf("month").format("YYYY-MM-DD HH:mm:ss"); //todo:完成时间
+  // console.log("date===========", create_time);
+  // const converted_case_num = formData.value.converted_case_num;
+  // const case_source = formData.value.case_source;
+  // const target_location = formData.value.target_location; //todo
+  // const generate_status = 2; //todo
+  // const operations = [""];
+  // const id = formData.value.taskId;
+  // const order_index = 111;
+  // const newTask = {
+  //   id,
+  //   create_time,
+  //   finish_time,
+  //   converted_case_num,
+  //   case_source,
+  //   order_index,
+  //   target_location,
+  //   generate_status,
+  //   operations,
   // };
 
-  const create_time = dayjs().format("YYYY-MM-DD HH:mm:ss"); //返回当前时间
-  const finish_time = dayjs().endOf("month").format("YYYY-MM-DD HH:mm:ss"); //todo:完成时间
-  console.log("date===========", create_time);
-  const converted_case_num = formData.value.converted_case_num;
-  const case_source = formData.value.case_source;
-  const target_location = formData.value.target_location; //todo
-  const generate_status = 2; //todo
-  const operations = [""];
-  const id = formData.value.taskId;
-  const order_index = 111;
-  const newTask = {
-    id,
-    create_time,
-    finish_time,
-    converted_case_num,
-    case_source,
-    order_index,
-    target_location,
-    generate_status,
-    operations,
-  };
 
-  allTask.value.push(newTask);
-  console.log("allTask===", allTask);
+  // allTask.value.push(newTask);
+  // console.log("allTask===", allTask);
 
-  console.log("each====", newTask);
+  // console.log("each====", newTask);
   console.log("currentPage===", currentPage.value);
 
   fetchTableData(currentPage.value, pageSize.value);
@@ -304,16 +330,20 @@ const onConfirm = () => {
   // provide('isClearForm',true);
 };
 
-//test management导入
-const innerVisible = ref(false);
+//2. test management导入
+const testManagementVisible = ref(false);
+const testManagementDialog= ref<HTMLElement | null>(null);
 const onNext = () => {
   console.log("next ");
-  innerVisible.value = true; //打开下一个对话框
+  testManagementVisible.value = true; //打开下一个对话框
+  removeInert(testManagementDialog.value)
+
 };
 
-const handleCloseInner = (done: () => void) => {
+const handleCloseTestManagement = (done: () => void) => {
   ElMessageBox.confirm("Are you sure to close this dialog?")
     .then(() => {
+      setInert(testManagementDialog.value)
       done();
     })
     .catch(() => {
@@ -353,7 +383,7 @@ const onStopAll = () => {
         </el-dropdown>
         <el-button
           class="header__btn__monitor"
-          type="primary"
+          type="danger"
           aria-label="停止所有"
           @click="onStopAll"
         >
@@ -362,10 +392,11 @@ const onStopAll = () => {
       </div>
     </div>
     <el-dialog
-      v-model="dialogVisible"
+      v-model="importDialogVisible"
       :title="`${commandTitle} 导入`"
       :before-close="handleClose"
-      v-if="dialogVisible"
+      v-if="importDialogVisible"
+      ref="importDialog"
     >
       <!-- :isClearForm="isClearForm" -->
       <DynamicForm
@@ -409,7 +440,7 @@ const onStopAll = () => {
       </DynamicForm>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">Cancel</el-button>
+          <el-button @click="importDialogVisible = false">Cancel</el-button>
           <el-button
             v-if="commandTitle === 'excel'"
             type="primary"
@@ -430,11 +461,12 @@ const onStopAll = () => {
 
     <!-- test management导入框：树形结构 -->
     <el-dialog
+      ref="testManagementDialog"
       class="tpe-usecase-import"
-      v-model="innerVisible"
+      v-model="testManagementVisible"
       title="新建任务"
       modal-class="usecase-modal"
-      :before-close="handleCloseInner"
+      :before-close="handleCloseTestManagement"
     >
       <template #header="{}">
         <div class="my-header">
@@ -445,8 +477,8 @@ const onStopAll = () => {
       <TpaUsecaseImport />
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="innerVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="innerVisible = false">
+          <el-button @click="testManagementVisible = false">Cancel</el-button>
+          <el-button type="primary" @click="testManagementVisible = false">
             Ok
           </el-button>
         </div>

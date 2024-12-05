@@ -37,16 +37,18 @@
             accept=".xlsx,.xls"
           />
         </div>
+        <!-- v-model="formData[field.value]" -->
+        <!-- filterable -->
 
         <el-select-v2
           v-else-if="field.type === 'select'"
-          v-model="formData[field.value]"
           :placeholder="field.placeholder"
-          :options="field.options"
-          filterable
+          v-model="optionValue"
+          :options="options"
           clearable
+          filterable 
           @change="onSelected"
-          @focus="onSelectFocused"
+          @focus="onSelectFocused(field.value)"
         >
         </el-select-v2>
       </el-form-item>
@@ -62,6 +64,22 @@
 import { computed, inject, reactive, ref, watch } from "vue";
 import * as XLSX from "xlsx";
 import dayjs from "dayjs";
+import {
+  fetchTaskData,
+  createTask,
+  cancelTask,
+  cancelAllTask,
+  moveUpByTaskId,
+  moveDownByTaskId,
+  fetchTargetPath,
+  getProjectsLinkStatus,
+  getLinkedSequencesByTpaId
+} from "@/api";
+import type {
+  projectPathAbout,
+  IProjectsLinkStatus,
+  ILinkedSequences,
+} from "@/types";
 
 const props = defineProps({
   fields: Array,
@@ -102,11 +120,17 @@ const emits = defineEmits<IEmits>();
 // isClear.value=inject("clearForm");
 // 用来存储解析后的文件数据
 
+const optionValue=ref('')
+
+const options=ref([]);//包括value和label
+// const case_source=ref(0);
 const formData = reactive({
   taskId: 9090,
   ranges: [], // 假设我们要提取“编号范围”数据并显示
   converted_case_num: 0, //
-  case_source: 1, //excel
+  case_source: 0, //excel:1  link:2
+  options:[],
+  target_location:''
 });
 
 export interface ISheetRange {
@@ -198,16 +222,72 @@ const handleFileSelect = (event: Event) => {
 
 //todo:
 //当选择器的输入框获得焦点时触发，加载options选项
-const onSelectFocused = () => {};
+
+// async function getAllTargetPath(){
+//   let res=await fetchTargetPath()
+//   return res;
+// }
+// const onSelectFocused = () => {
+//   options.value=getAllTargetPath();
+// };
+
+async function onSelectFocused(value) {
+  if(value==='target_location'){
+    formData.case_source=1;//excel
+    let res=await fetchTargetPath();
+  console.log("path---res",res);
+  options.value=res.map((project)=>{
+    const show=`${project.projectName}: ${project.absPath}`
+    return {label:show,value:project.absPath}
+  });//获取项目绝对路径 
+  formData.options=options.value;
+  }else if(value==='projectName'){
+    formData.case_source=2;
+    let res=await getProjectsLinkStatus();//linkedIdList
+    options.value=res.map((project)=>{
+  /////====== todo:
+  /**
+   *   {
+            "isLinked": false,
+            "linkedId": null,
+            "projectName": "demo"
+        },
+        {
+            "isLinked": true,
+            "linkedId": "5e6a6b20937f4db991203b369c9d9686",
+            "linkedProjectName": "TAE生成序列项目",
+            "projectName": "用例同步"
+        }
+  */
+      let show='';
+      let value='';
+      let disabled:boolean;
+      if(project.isLinked){
+        show=`${project.projectName}(${project.linkedProjectName})`;
+        value=project.linkedId;
+        disabled=false;
+      }else {
+        show=project.projectName;
+        value=show;
+        disabled=true;
+      }
+
+      return{label:show,value:value,disabled}
+    })
+  }
+
+}
 
 /**
  * todo：select选项，调对应接口
  *
  * @param option
  */
-const onSelected = (option: string | number | object) => {
+const onSelected = (option: string ) => {
+  console.log('optionValue=====',optionValue.value);
+  formData.target_location=option;
+  // optionValue.value=option;
   emits("update:selectedOption", option);
-
   // excelParse(case_source); //解析excel文件
 };
 </script>
