@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Search } from "@element-plus/icons-vue";
-import { ref } from "vue";
+import { ref, defineEmits } from "vue";
 
 import Tree from "@/views/dialogContent/Tree.vue";
 
@@ -23,6 +23,16 @@ const defaultProps = ref({
   children: "children",
   label: "label",
 });
+
+interface IEmits {
+  (e: "update:selectedRows", value: any): void;
+}
+const emits = defineEmits<IEmits>();
+
+const getSelectedRows = (selectedRows) => {
+  console.log("selectedRows  in tae", selectedRows);
+  emits("update:selectedRows", selectedRows);
+};
 </script>
 
 <template>
@@ -54,7 +64,7 @@ const defaultProps = ref({
         </div>
       </div>
       <div class="content__main">
-        <Tree />
+        <Tree @update:selectedRows="getSelectedRows" />
       </div>
       <!-- <div class="content__buttons">
         <el-button class="cancel">Cancel</el-button>
@@ -72,7 +82,7 @@ const defaultProps = ref({
       justify-content: flex-start;
       align-items: center;
       width: fit-content; //Hug (172px)px
-      height: 29px; 
+      height: 29px;
       box-sizing: border-box;
       padding: 0px 0px 0px 43px;
       gap: 8px;
@@ -165,8 +175,8 @@ const defaultProps = ref({
         }
         // .searchIcon,
         .filterIcon {
-            max-width: 24px;
-            max-height: 24px;
+          max-width: 24px;
+          max-height: 24px;
           //   padding: 3.57px 4px 4.43px 4px;
           //   gap: 0px;
           //   opacity: 0px;

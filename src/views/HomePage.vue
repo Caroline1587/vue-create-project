@@ -14,7 +14,7 @@ import {
   moveDownByTaskId,
   fetchTargetPath,
   getProjectsLinkStatus,
-  getLinkedSequencesByTpaId
+  getLinkedSequencesByTpaId,
 } from "@/api/task";
 import TaskTable from "@/views/components/TaskTable.vue";
 import DynamicForm from "@/views/dialogContent/DynamicForm.vue";
@@ -190,19 +190,21 @@ const handleCommand = (command: string) => {
 //清空select下拉框的值
 const clearOptionValue = () => {};
 
-const setInert=(element:HTMLElement|null)=>{
-  if(element && element instanceof HTMLElement) element.setAttribute("inert", "");//禁止交互
-}
-const removeInert=(element:HTMLElement|null)=>{
-  if(element && element instanceof HTMLElement) element.removeAttribute("inert");;//交互
-}
+const setInert = (element: HTMLElement | null) => {
+  if (element && element instanceof HTMLElement)
+    element.setAttribute("inert", ""); //禁止交互
+};
+const removeInert = (element: HTMLElement | null) => {
+  if (element && element instanceof HTMLElement)
+    element.removeAttribute("inert"); //交互
+};
 
 //关闭dialog对话框前的操作
 const handleClose = (done: () => void) => {
   ElMessageBox.confirm("Are you sure to close this dialog?")
     .then(() => {
       clearOptionValue();
-      setInert(importDialog.value)
+      setInert(importDialog.value);
       done();
     })
     .catch(() => {
@@ -269,15 +271,16 @@ const handleIndexUpdate = (curIndex: number, changedIndex: number) => {
 // const isClearForm=ref(false);
 
 //excel: 确认关闭对话框前：记录并保存form数据
-async function getCreateRes(params: ParamsToCreateTask){
-  let res=await createTask(params);
+async function getCreateRes(params: ParamsToCreateTask) {
+  let res = await createTask(params);
   // console.log("创建成功时返回的数据",res);
-  
-  if(res) await fetchAllTableData();
+
+  if (res) await fetchAllTableData();
 }
+//excel-确认导入
 const onConfirm = () => {
   importDialogVisible.value = false; //关闭对话框
-  setInert(importDialog.value)
+  setInert(importDialog.value);
   //todo: 数据展示在table中
   //todo:创建新任务======createTask(params)
   //- excel:
@@ -285,16 +288,18 @@ const onConfirm = () => {
     case_number: formData.value.taskId,
     converted_case_num: formData.value.converted_case_num,
     target_location: formData.value.target_location,
-    case_source: formData.value.case_source,//1
+    case_source: formData.value.case_source, //1
     other_info:
-    formData.value.case_source === 1 ? { excelPath: formData.value.excelPath } : { linkedIdList: [""] },
+      formData.value.case_source === 1
+        ? { excelPath: formData.value.excelPath }
+        : { linkedIdList: [""] },
   };
-  console.log("formdata====",formData.value);
-  
-  console.log("params===",params);
-  const res=getCreateRes(params);
-  const id=res[0].id;
-  console.log("创建成功时返回的数据",res);//[{"id":1}]
+  console.log("formdata====", formData.value);
+
+  console.log("params===", params);
+  const res = getCreateRes(params);
+  const id = res[0].id;
+  console.log("创建成功时返回的数据", res); //[{"id":1}]
   // const create_time = dayjs().format("YYYY-MM-DD HH:mm:ss"); //返回当前时间
   // const finish_time = dayjs().endOf("month").format("YYYY-MM-DD HH:mm:ss"); //todo:完成时间
   // console.log("date===========", create_time);
@@ -317,7 +322,6 @@ const onConfirm = () => {
   //   operations,
   // };
 
-
   // allTask.value.push(newTask);
   // console.log("allTask===", allTask);
 
@@ -332,18 +336,17 @@ const onConfirm = () => {
 
 //2. test management导入
 const testManagementVisible = ref(false);
-const testManagementDialog= ref<HTMLElement | null>(null);
+const testManagementDialog = ref<HTMLElement | null>(null);
 const onNext = () => {
   console.log("next ");
   testManagementVisible.value = true; //打开下一个对话框
-  removeInert(testManagementDialog.value)
-
+  removeInert(testManagementDialog.value);
 };
 
 const handleCloseTestManagement = (done: () => void) => {
   ElMessageBox.confirm("Are you sure to close this dialog?")
     .then(() => {
-      setInert(testManagementDialog.value)
+      setInert(testManagementDialog.value);
       done();
     })
     .catch(() => {
@@ -354,6 +357,52 @@ const handleCloseTestManagement = (done: () => void) => {
 //todo：停止所有任务
 const onStopAll = () => {
   cancelAllTask();
+};
+
+const selectedRowsInTae = ref([]);
+//todo:加入
+const onConfirmTAEImport = () => {
+  testManagementVisible.value = false; //关闭当前窗口；
+  setInert(testManagementDialog.value);
+
+  importDialogVisible.value = false; //关闭项目选项窗口；
+  setInert(importDialog.value);
+
+  // //todo=====加入table中: selectedRowsInTae
+  console.log("selectedRowsInTae.value", ...selectedRowsInTae.value);
+  const dealtData = selectedRowsInTae.value.map((row) => {
+    const create_time = dayjs().format("YYYY-MM-DD HH:mm:ss"); //返回当前时间
+    const finish_time = dayjs().endOf("month").format("YYYY-MM-DD HH:mm:ss"); //todo:完成时间
+    const converted_case_num = 9999;
+    const case_source = "tae====";
+    const target_location = "target_location"; //todo
+    const generate_status = 2; //todo
+    const operations = [""];
+    const order_index = 888;
+    const { id, testcaseNumber } = row;
+    return {
+      id,
+      create_time,
+      finish_time,
+      converted_case_num,
+      case_source,
+      order_index,
+      target_location,
+      generate_status,
+      operations,
+    };
+  });
+
+  console.log(dealtData);
+
+  allTask.value = [...allTask.value, ...dealtData];
+
+  fetchTableData(currentPage.value, pageSize.value); //刷新
+};
+
+const onSelectedRows = (selectedRows) => {
+  console.log("selectedRows in homepage===", selectedRows);
+  selectedRowsInTae.value = selectedRows;
 };
 </script>
 
@@ -474,13 +523,11 @@ const onStopAll = () => {
           <div class="title">新建任务</div>
         </div>
       </template>
-      <TpaUsecaseImport />
+      <TpaUsecaseImport @update:selectedRows="onSelectedRows" />
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="testManagementVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="testManagementVisible = false">
-            Ok
-          </el-button>
+          <el-button type="primary" @click="onConfirmTAEImport"> Ok </el-button>
         </div>
       </template>
     </el-dialog>
@@ -564,13 +611,46 @@ const onStopAll = () => {
       }
     }
   }
-  :deep(.el-overlay .el-overlay-dialog .el-dialog) {
+  :deep(.el-overlay .el-overlay-dialog) {
     // width: fit-content; //1600px
-    // height: fit-content; //880px
+    min-height: 400px; //880px
+    // overflow: visible;
     // top: 100px;
     // left: 160px;
     gap: 0px;
     // opacity: 0;
+    .my-header {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      width: 172px;
+      height: 29px;
+      box-sizing: border-box;
+      gap: 8px;
+      opacity: 0px;
+
+      .rectangle {
+        width: 3px;
+        height: 17px;
+        gap: 0px;
+        opacity: 0px;
+        background: #5a78ff;
+      }
+      .title {
+        width: 118px;
+        height: 29px;
+        gap: 0px;
+        opacity: 0px;
+        color: #283a64;
+        font-family: Noto Sans SC;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 28.96px;
+        text-align: left;
+        text-underline-position: from-font;
+        text-decoration-skip-ink: none;
+      }
+    }
   }
   .main {
     display: flex;
@@ -590,37 +670,5 @@ const onStopAll = () => {
 }
 :deep(.tpe-usecase-import) {
   width: fit-content;
-}
-.my-header {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  width: 172px;
-  height: 29px;
-  box-sizing: border-box;
-  gap: 8px;
-  opacity: 0px;
-
-  .rectangle {
-    width: 3px;
-    height: 17px;
-    gap: 0px;
-    opacity: 0px;
-    background: #5a78ff;
-  }
-  .title {
-    width: 118px;
-    height: 29px;
-    gap: 0px;
-    opacity: 0px;
-    color: #283a64;
-    font-family: Noto Sans SC;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 28.96px;
-    text-align: left;
-    text-underline-position: from-font;
-    text-decoration-skip-ink: none;
-  }
 }
 </style>

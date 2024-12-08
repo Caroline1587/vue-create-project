@@ -46,7 +46,7 @@
           v-model="optionValue"
           :options="options"
           clearable
-          filterable 
+          filterable
           @change="onSelected"
           @focus="onSelectFocused(field.value)"
         >
@@ -73,7 +73,7 @@ import {
   moveDownByTaskId,
   fetchTargetPath,
   getProjectsLinkStatus,
-  getLinkedSequencesByTpaId
+  getLinkedSequencesByTpaId,
 } from "@/api";
 import type {
   projectPathAbout,
@@ -120,17 +120,17 @@ const emits = defineEmits<IEmits>();
 // isClear.value=inject("clearForm");
 // 用来存储解析后的文件数据
 
-const optionValue=ref('')
+const optionValue = ref("");
 
-const options=ref([]);//包括value和label
+const options = ref([]); //包括value和label
 // const case_source=ref(0);
 const formData = reactive({
   taskId: 9090,
   ranges: [], // 假设我们要提取“编号范围”数据并显示
   converted_case_num: 0, //
   case_source: 0, //excel:1  link:2
-  options:[],
-  target_location:''
+  options: [],
+  target_location: "",
 });
 
 export interface ISheetRange {
@@ -232,21 +232,25 @@ const handleFileSelect = (event: Event) => {
 // };
 
 async function onSelectFocused(value) {
-  if(value==='target_location'){
-    formData.case_source=1;//excel
-    let res=await fetchTargetPath();
-  console.log("path---res",res);
-  options.value=res.map((project)=>{
-    const show=`${project.projectName}: ${project.absPath}`
-    return {label:show,value:project.absPath}
-  });//获取项目绝对路径 
-  formData.options=options.value;
-  }else if(value==='projectName'){
-    formData.case_source=2;
-    let res=await getProjectsLinkStatus();//linkedIdList
-    options.value=res.map((project)=>{
-  /////====== todo:
-  /**
+  if (value === "target_location") {
+    formData.case_source = 1; //excel
+    let res = await fetchTargetPath();
+    console.log("path---res", res);
+    options.value = res.map((project) => {
+      const show = `${project.projectName}: ${project.absPath}`;
+      return { label: show, value: project.absPath };
+    }); //获取项目绝对路径
+    formData.options = options.value;
+  } else if (value === "projectName") {
+    return (options.value = [
+      { label: "op1", value: "op1" },
+      { label: "op2", value: "op2" },
+    ]);
+    formData.case_source = 2;
+    let res = await getProjectsLinkStatus(); //linkedIdList
+    options.value = res.map((project) => {
+      /////====== todo:
+      /**
    *   {
             "isLinked": false,
             "linkedId": null,
@@ -259,23 +263,22 @@ async function onSelectFocused(value) {
             "projectName": "用例同步"
         }
   */
-      let show='';
-      let value='';
-      let disabled:boolean;
-      if(project.isLinked){
-        show=`${project.projectName}(${project.linkedProjectName})`;
-        value=project.linkedId;
-        disabled=false;
-      }else {
-        show=project.projectName;
-        value=show;
-        disabled=true;
+      let show = "";
+      let value = "";
+      let disabled: boolean;
+      if (project.isLinked) {
+        show = `${project.projectName}(${project.linkedProjectName})`;
+        value = project.linkedId;
+        disabled = false;
+      } else {
+        show = project.projectName;
+        value = show;
+        disabled = true;
       }
 
-      return{label:show,value:value,disabled}
-    })
+      return { label: show, value: value, disabled };
+    });
   }
-
 }
 
 /**
@@ -283,9 +286,9 @@ async function onSelectFocused(value) {
  *
  * @param option
  */
-const onSelected = (option: string ) => {
-  console.log('optionValue=====',optionValue.value);
-  formData.target_location=option;
+const onSelected = (option: string) => {
+  console.log("optionValue=====", optionValue.value);
+  formData.target_location = option;
   // optionValue.value=option;
   emits("update:selectedOption", option);
   // excelParse(case_source); //解析excel文件

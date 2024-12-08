@@ -6,7 +6,12 @@ import {
   SuccessFilled,
   CircleClose,
 } from "@element-plus/icons-vue";
-import {cancelTask,cancelAllTask,moveUpByTaskId,moveDownByTaskId} from "@/api"
+import {
+  cancelTask,
+  cancelAllTask,
+  moveUpByTaskId,
+  moveDownByTaskId,
+} from "@/api";
 
 // import type{ITableColumnFields} from "@/types"
 
@@ -49,6 +54,7 @@ const handleMoveUp = (curPageIndex) => {
     emits("update:index", index, preIndex); // 通过事件将更新的数据传递给父组件
   }
 };
+
 const handleMoveDown = (curPageIndex) => {
   const index = (props.currentPage - 1) * props.pageSize + curPageIndex;
   const nextIndex = index + 1;
@@ -59,7 +65,6 @@ const handleMoveDown = (curPageIndex) => {
     emits("update:index", index, nextIndex); // 通过事件将更新的数据传递给父组件
   }
 };
-
 
 const handleStop = (curPageIndex) => {};
 const handleStopToNext = (curPageIndex) => {};
@@ -147,9 +152,6 @@ const handleStopToNext = (curPageIndex) => {};
               class="buildStatusContent --flex-center --buildStatus-color--waiting"
               v-else-if="scope.row.generate_status === 3"
             >
-              <!-- <el-icon class="--buildStatus-color--waiting"
-                ><SuccessFilled
-              /></el-icon> -->
               <span>已取消</span>
             </div>
           </div>
@@ -172,7 +174,7 @@ const handleStopToNext = (curPageIndex) => {};
               >
                 <!-- <el-icon><CircleClose /></el-icon> -->
                 <img
-                  src="../assets/cancel.svg"
+                  src="@/assets/cancel.svg"
                   class="cancel icon"
                   alt="cancel icon"
                   srcset=""
@@ -187,7 +189,7 @@ const handleStopToNext = (curPageIndex) => {};
                 @click="handleMoveUp(scope.$index)"
               >
                 <img
-                  src="../assets/moveUp.svg"
+                  src="@/assets/moveUp.svg"
                   class="moveUp icon"
                   alt="moveUp icon"
                   srcset=""
@@ -207,7 +209,7 @@ const handleStopToNext = (curPageIndex) => {};
                 @click="handleMoveDown(scope.$index)"
               >
                 <img
-                  src="../assets/moveDown.svg"
+                  src="@/assets/moveDown.svg"
                   class="moveDown icon"
                   alt="moveDown icon"
                   srcset=""
@@ -220,13 +222,6 @@ const handleStopToNext = (curPageIndex) => {};
               class="operationsContent"
               v-if="scope.row.generate_status === 1"
             >
-              <!-- <el-button
-                link
-                type="primary"
-                size="small"
-                @click="handleRemove(scope.$index)"
-                >删除</el-button
-              > -->
               <el-button
                 link
                 type="primary"
@@ -235,27 +230,13 @@ const handleStopToNext = (curPageIndex) => {};
               >
                 <!-- <el-icon><VideoPause /></el-icon> -->
                 <img
-                  src="../assets/stop.svg"
+                  src="@/assets/stop.svg"
                   class="stop icon"
                   alt="stop icon"
                   srcset=""
                 />
                 停止当前</el-button
               >
-              <!-- <el-button
-                link
-                type="primary"
-                size="small"
-                @click="handleStopToNext(scope.$index)"
-              >
-                <img
-                  src="../assets/next.svg"
-                  class="next icon"
-                  alt="next icon"
-                  srcset=""
-                />
-                跳过并执行下一个</el-button
-              > -->
             </div>
           </div>
         </template>
