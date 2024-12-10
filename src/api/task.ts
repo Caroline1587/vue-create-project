@@ -18,7 +18,7 @@ export const cancelTask = (task_id: number) => {
 
 //取消所有任务
 export const cancelAllTask = () => {
-  return request.put("/v2/caseGen/task/cancel");
+  return request.put("/v2/caseGen/task/stop");
 };
 
 //指定任务上移

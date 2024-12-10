@@ -51,8 +51,7 @@
 // import TreeInput from "./TreeInput.vue"; // 如果有自定义的输入组件
 import { ElTree } from "element-plus";
 import type Node from "element-plus/es/components/tree/src/model/node";
-// import type { TreeNodeData } from "element-plus/es/components/tree/src/tree.type";
-import { provide, ref, watch, defineEmits } from "vue";
+import {  ref, watch, defineEmits } from "vue";
 import { getLinkedSequencesByTpaId } from "@/api";
 import { ILinkedSequence, ITestcase, ITestcaseInfo } from "@/types";
 
@@ -117,9 +116,10 @@ const filterNode = (inputValue: string, data: TreeNodeData) => {
 // }, 300);
 // watch(filterText, debounceFilter);
 
+
+// ====== todo：懒加载子数据,仅当 lazy 属性为true 时生效
 // let count = 1;
 // let time = 0;
-// ====== todo：懒加载子数据,仅当 lazy 属性为true 时生效
 // const loadNode = (
 //   node: Node,
 //   resolve: (data: Tree[]) => void,
@@ -168,6 +168,7 @@ const allData = ref([]);
 
 const selectedNodes = ref<TreeNodeData[]>([]); // 用于存储选中节点的数据
 
+//依据选中的节点更新表格数据
 const updateTableData = () => {
   // 表格数据是与树节点的某些数据有关
   tableData.value = selectedNodes.value.flatMap(
@@ -229,6 +230,7 @@ const handleCheckChange = async (
   updateTableData();
 };
 
+//选择当前节点de其子节点
 const checkChildren = (data: TreeNodeData[]) => {
   data.forEach((each) => {
     if (!currentNodeChecked.value.includes(each.id)) {
@@ -251,27 +253,19 @@ const checkChildren = (data: TreeNodeData[]) => {
 
 //获取全部数据
 (async () => {
-  const res = await getLinkedSequencesByTpaId()[0];
-  const { childrenList, hasChildren, id, name, testcaseList } = res;
+  const res = await getLinkedSequencesByTpaId();
 
-  console.log("name===", name);
+  const data= res;
 
-  const data = {
-    id,
-    name,
-    childrenList,
-    hasChildren,
-    testcaseList,
-  };
-  allData.value = [data];
-  treeData.value = [data];
+  allData.value =data;
+  treeData.value = data;
 
-  // currentNodeExpand.value.push(id);
-  // currentNodeChecked.value.push(id);
   console.log("selectedNodes", selectedNodes.value);
 
   //展开及选中第一项及其子项
-  checkChildren(treeData.value);
+  currentNodeExpand.value.push(data[0].id);
+  currentNodeChecked.value.push(data[0].id);
+  checkChildren(data[0].childrenList);
 
   updateTableData();
 })();
@@ -297,7 +291,7 @@ const handleSelectionChange = (rows: any) => {
 const nodeClick = (data: TreeNodeData, node: Node) => {
   console.log("节点点击:", data, node);
   // 根据点击的树节点，更新表格的数据
-  updateTableData(data);
+  // updateTableData(data);
 };
 
 const nodeExpand = (data: TreeNodeData, node: Node) => {

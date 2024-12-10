@@ -47,7 +47,7 @@ service.interceptors.response.use(
       warningMessage(msg);
       return false;
     } //异常信息提示
-    if (20000 == code) successMessage(msg); //任务创建成功、获取所有任务成功、任务取消成功
+    if (20000 == code && msg!="获取所有任务成功") successMessage(msg); //任务创建成功、获取所有任务成功、任务取消成功
     return data;
   },
   (error) => {

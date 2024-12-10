@@ -27,31 +27,13 @@ export interface ITaskInTable extends ITask {
 const taskStore = useTaskStore();
 
 const allTask = ref<ITask[]>([]);
-// 模拟获取分页数据（可替换为真实的后端 API 调用）
-//0-等待中 1-执行中 2-已完成 3-已取消
-const allTaskMock = ref(
-  Array.from({ length: 100 }, (_, index) => ({
-    id: `A0${index + 1}`,
-    case_number: "20",
-    create_time: `2024-11-${(index % 30) + 1} 00:00:00`,
-    finish_time: `2025-11-${(index % 30) + 1} 00:00:00`,
-    converted_case_num: Math.floor(Math.random() * 100),
-    case_source: Math.random() > 0.5 ? 1 : 2,
-    order_index: index + 1,
-    target_location: `target-${index + 1}`,
-    generate_status: index % 2 === 0 ? 0 : 1,
-    operations: ["删除", "下移"],
-  }))
-);
-
-allTask.value = allTaskMock.value;
-
 //todo: 异步获取数据并赋值
 async function fetchAllTableData() {
   try {
     const data = await fetchTaskData(); //获取所有任务数据
     if (Array.isArray(data)) {
       allTask.value = data;
+      console.log('allTask===fetchAllTableData',allTask);
     } else {
       console.error("Invalid data format: expected an array.");
     }
@@ -59,6 +41,23 @@ async function fetchAllTableData() {
     console.error("Error fetching tasks:", error);
   }
 }
+
+// const isUpdated=ref(false)
+fetchAllTableData();
+// onMounted(()=>{
+//   fetchAllTableData();
+//   fetchTableData(currentPage.value,pageSize.value)
+// })
+
+const length = computed(() => sortedAllTableData.value.length);
+const total = ref(length); // 总条目数
+const currentPage = ref(1); // 当前页码
+const pageSize = ref(20); // 每页条数
+const pageSizes = ref([20, 40, 60, 80]);
+// const size = ref<ComponentSize>("default");//页码形状大小
+// const background = ref(false);
+// const disabled = ref(false);
+
 
 //不同状态对应的操作选项
 const waitingOperations = ref(["取消", "上移", "下移"]);
@@ -91,8 +90,8 @@ const waitingRowsLengthInAll = computed(() => waitingRows.value.length);
 
 // 合并按状态排序后的行
 const sortedAllTableData = computed(() => {
-  // console.log("waitingRows", waitingRows.value);
-  // console.log("inProgressRows", inProgressRows.value);
+  console.log("waitingRows", waitingRows.value);
+  console.log("inProgressRows", inProgressRows.value);
   return [
     ...waitingRows.value,
     ...inProgressRows.value,
@@ -101,24 +100,101 @@ const sortedAllTableData = computed(() => {
   ];
 });
 
-const tableData = ref<ITaskInTable[]>([]); // 当前页数据
-const length = computed(() => sortedAllTableData.value.length);
-const total = ref(length); // 总条目数
-const currentPage = ref(1); // 当前页码
-const pageSize = ref(20); // 每页条数
-const pageSizes = ref([20, 40, 60, 80]);
-// const size = ref<ComponentSize>("default");//页码形状大小
-// const background = ref(false);
-// const disabled = ref(false);
+
+
+// let startIndex = ref((currentPage.value - 1) * pageSize.value);
+// let startIndex = computed(()=>(currentPage.value - 1) * pageSize.value);
+// let endIndex = computed(()=> (startIndex.value + pageSize.value));
+// let endIndex = ref(startIndex.value + pageSize.value);
+const tableData=ref([])
+// const tableData=computed(()=>{
+//   sortedAllTableData.value.slice(startIndex.value, endIndex.value)
+// })
 
 //获取当前页表格数据
 const fetchTableData = (page: number, size: number) => {
-  const startIndex = (page - 1) * size;
-  const endIndex = startIndex + size;
+  // console.log('sortedAllTableData.value.',sortedAllTableData.value);
+  // currentPage.value=page;
+  // pageSize.value=size;
+   let startIndex = (page - 1) * size;
+   let endIndex = startIndex + size;
   tableData.value = sortedAllTableData.value.slice(startIndex, endIndex);
+  console.log('startIndex, endIndex',startIndex, endIndex);
+  console.log('sortedAllTableData',sortedAllTableData.value);
+  
+  console.log('sortedAllTableData.value.slice(startIndex, endIndex);',sortedAllTableData.value.slice(startIndex, endIndex));
 };
 
+
 // const testManagementVisible = ref(false);
+
+
+// onMounted(()=>{
+//   fetchAllTableData();//初始化
+// })
+function mySetInterval(fn,fn1,timeout) {
+  // 控制器，控制定时器是否继续执行
+  var intervalController = {
+    flag: true,
+    stop: function() {
+      this.flag = false;
+    }
+  };
+  
+  // 设置递归函数，模拟定时器执行
+  function interval() {
+    if (intervalController.flag) {
+      fn();
+      fn1(currentPage.value,pageSize.value);
+      console.log('timer执行====');
+      
+      setTimeout(interval, timeout); // 继续调用自己
+    }
+  }
+
+  // 启动定时器
+  setTimeout(interval, timeout);
+
+  // 返回控制器，并提供停止定时器的方法
+  return intervalController;
+}
+// 启动定时器
+
+const controller = mySetInterval(fetchAllTableData,fetchTableData,1000);
+
+// // 停止定时器的调用（10秒后停止定时器）
+// setTimeout(() => {
+//   controller.stop(); // 停止定时器
+// }, 10000);
+
+
+
+
+// 模拟获取分页数据（可替换为真实的后端 API 调用）
+//0-等待中 1-执行中 2-已完成 3-已取消
+const allTaskMock = ref(
+  Array.from({ length: 100 }, (_, index) => ({
+    id: `A0${index + 1}`,
+    case_number: "20",
+    create_time: `2024-11-${(index % 30) + 1} 00:00:00`,
+    finish_time: `2025-11-${(index % 30) + 1} 00:00:00`,
+    converted_case_num: Math.floor(Math.random() * 100),
+    case_source: Math.random() > 0.5 ? 1 : 2,
+    order_index: index + 1,
+    target_location: `target-${index + 1}`,
+    generate_status: index % 2 === 0 ? 0 : 1,
+    operations: ["删除", "下移"],
+  }))
+);
+
+// allTask.value = allTaskMock.value;
+
+
+// const tableData = ref<ITaskInTable[]>([]); // 当前页数据
+  // const tableData =computed(()=>{
+  //   return sortedAllTableData.value.slice(startIndex, endIndex);
+  // })
+
 
 const dynamicForm = ref([]);
 
@@ -136,11 +212,14 @@ const handleCommand = (command: string) => {
   else case_source.value = 2;
 
   // 模拟数据：
-  const initials = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
-  const options = Array.from({ length: 1000 }).map((_, idx) => ({
-    value: `Option ${idx + 1}`,
-    label: `${initials[idx % 10]}${idx}`,
-  }));
+  // const initials = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
+  // const options = Array.from({ length: 1000 }).map((_, idx) => ({
+  //   value: `Option ${idx + 1}`,
+  //   label: `${initials[idx % 10]}${idx}`,
+  // }));
+
+
+  const options=ref([])
 
   //todo: 获取目标路径options
 
@@ -223,8 +302,11 @@ const onSourceFileSelect = (
   console.log("formData======", formData.value);
   if (formData.value.excelPath) isConversionScopeShown.value = true;
 };
-const onOptionSelect = (option: string | number | object) => {
+
+const targetLocation=ref('')
+const onOptionSelect = (option: string) => {
   console.log("目标文件目录 选择", option);
+  targetLocation.value=option;
 };
 
 // 初始化数据
@@ -252,20 +334,37 @@ const deleteRow = (index: number) => {
   fetchTableData(currentPage.value, pageSize.value); //重新获取数据
 };
 
+
+const handleUpdate=()=>{
+  fetchAllTableData()//更新数据
+  fetchTableData(currentPage.value, pageSize.value);
+}
 //todo：调用接口======== 上移下移操作：更改index
-const handleIndexUpdate = (curIndex: number, changedIndex: number) => {
-  console.log("父组件接受的index", curIndex);
+const handleIndexUpdate = (curIndex:number,changedIndex:number) => {
+
+  // console.log("父组件接受的index", curIndex);
+
+  handleUpdate();
   // 交换当前项和上/下一项
 
   //依据id
   //todo: moveUpByTaskId(task_id)
   //      moveDownByTaskId(task_id)
-  const temp = sortedAllTableData.value[curIndex];
-  sortedAllTableData.value[curIndex] = sortedAllTableData.value[changedIndex];
-  sortedAllTableData.value[changedIndex] = temp;
-  console.log("sortedAllTableData", sortedAllTableData);
 
-  fetchTableData(currentPage.value, pageSize.value);
+  // const temp = allTask.value[curIndex];
+  // allTask.value[curIndex] = allTask.value[changedIndex];
+  // allTask.value[changedIndex] = temp;
+  // console.log("allTask", allTask.value);
+  // console.log("allTask.value[curIndex]",allTask.value[curIndex]);
+  // console.log("allTask.value[changedIndex]",allTask.value[changedIndex]);
+
+
+    // 使用 splice 交换
+    // allTask.value.splice(curIndex, 1, allTask.value[changedIndex]);
+    // allTask.value.splice(changedIndex, 1, temp);
+
+  // console.log("index ,changing index",curIndex,changedIndex);
+
 };
 
 // const isClearForm=ref(false);
@@ -273,9 +372,10 @@ const handleIndexUpdate = (curIndex: number, changedIndex: number) => {
 //excel: 确认关闭对话框前：记录并保存form数据
 async function getCreateRes(params: ParamsToCreateTask) {
   let res = await createTask(params);
+
   // console.log("创建成功时返回的数据",res);
 
-  if (res) await fetchAllTableData();
+  // if (res) await fetchAllTableData();
 }
 //excel-确认导入
 const onConfirm = () => {
@@ -298,7 +398,7 @@ const onConfirm = () => {
 
   console.log("params===", params);
   const res = getCreateRes(params);
-  const id = res[0].id;
+  // const id = res[0].id;
   console.log("创建成功时返回的数据", res); //[{"id":1}]
   // const create_time = dayjs().format("YYYY-MM-DD HH:mm:ss"); //返回当前时间
   // const finish_time = dayjs().endOf("month").format("YYYY-MM-DD HH:mm:ss"); //todo:完成时间
@@ -360,7 +460,15 @@ const onStopAll = () => {
 };
 
 const selectedRowsInTae = ref([]);
-//todo:加入
+const caseNumberContainer=ref([]);
+const count=ref<number>(0);
+
+const caseNumberProduct=()=>{
+    caseNumberContainer.value.push(`TASK-${count}`);
+    count.value=count.value+1;
+}
+
+//todo: tae导入的数据 加入
 const onConfirmTAEImport = () => {
   testManagementVisible.value = false; //关闭当前窗口；
   setInert(testManagementDialog.value);
@@ -368,34 +476,63 @@ const onConfirmTAEImport = () => {
   importDialogVisible.value = false; //关闭项目选项窗口；
   setInert(importDialog.value);
 
+ const ids=selectedRowsInTae.value.map((row)=>row.id);
+ console.log('ids  in homepage',ids);
+ console.log("form data in home",formData.value);
+
+
+ //每条usecase为一个任务
+selectedRowsInTae.value.forEach((row,index)=>{
+  const params: ParamsToCreateTask = {
+    case_number: `TASK-${index}`,//formData.value.taskId,
+    converted_case_num: 1,//formData.value.converted_case_num,//
+    target_location: formData.value.target_location,//
+    case_source: formData.value.case_source, //2
+    other_info:
+      formData.value.case_source === 1
+        ? { excelPath: formData.value.excelPath }
+        : { linkedIdList: [row.id] },
+  };
+  getCreateRes(params);
+  console.log('params====',params);
+})
+
+  // console.log("res=====",res);
+
+  // const id = res[0].id;/
+
+  //targetLocation
   // //todo=====加入table中: selectedRowsInTae
   console.log("selectedRowsInTae.value", ...selectedRowsInTae.value);
-  const dealtData = selectedRowsInTae.value.map((row) => {
-    const create_time = dayjs().format("YYYY-MM-DD HH:mm:ss"); //返回当前时间
-    const finish_time = dayjs().endOf("month").format("YYYY-MM-DD HH:mm:ss"); //todo:完成时间
-    const converted_case_num = 9999;
-    const case_source = "tae====";
-    const target_location = "target_location"; //todo
-    const generate_status = 2; //todo
-    const operations = [""];
-    const order_index = 888;
-    const { id, testcaseNumber } = row;
-    return {
-      id,
-      create_time,
-      finish_time,
-      converted_case_num,
-      case_source,
-      order_index,
-      target_location,
-      generate_status,
-      operations,
-    };
-  });
 
-  console.log(dealtData);
+  fetchAllTableData();//获取所有数据
 
-  allTask.value = [...allTask.value, ...dealtData];
+  // const dealtData = selectedRowsInTae.value.map((row) => {
+  //   const create_time = dayjs().format("YYYY-MM-DD HH:mm:ss"); //返回当前时间
+  //   const finish_time = dayjs().endOf("month").format("YYYY-MM-DD HH:mm:ss"); //todo:完成时间
+  //   const converted_case_num = 9999;
+  //   const case_source = "tae====";
+  //   const target_location = targetLocation.value; //todo
+  //   const generate_status = 2; //todo
+  //   const operations = [""];
+  //   const order_index = 888;
+  //   const { id, testcaseNumber } = row;
+  //   return {
+  //     id,
+  //     create_time,
+  //     finish_time,
+  //     converted_case_num,
+  //     case_source,
+  //     order_index,
+  //     target_location,
+  //     generate_status,
+  //     operations,
+  //   };
+  // });
+
+  // console.log(dealtData);
+
+  // allTask.value = [...allTask.value, ...dealtData];
 
   fetchTableData(currentPage.value, pageSize.value); //刷新
 };
@@ -404,6 +541,18 @@ const onSelectedRows = (selectedRows) => {
   console.log("selectedRows in homepage===", selectedRows);
   selectedRowsInTae.value = selectedRows;
 };
+
+const onCancel=(case_number: string)=>{
+  console.log("case_number in homepage cancel",case_number);
+//  let changedRow= allTask.value.findIndex((task)=>{
+//     return task.case_number==case_number;
+//   })
+
+//   console.log('allTask',allTask.value);
+//   console.log('changedRow',changedRow);
+//   allTask.value[changedRow].generate_status=3
+//   // cancelTask()
+}
 </script>
 
 <template>
@@ -423,7 +572,7 @@ const onSelectedRows = (selectedRows) => {
           <template #dropdown>
             <el-dropdown-menu>
               <!-- 注释：暂时取消 EXCEL导入-->
-              <el-dropdown-item command="excel">EXCEL导入 </el-dropdown-item>
+              <!-- <el-dropdown-item command="excel">EXCEL导入 </el-dropdown-item> -->
               <el-dropdown-item command="test-management">
                 Test management导入
               </el-dropdown-item>
@@ -489,7 +638,15 @@ const onSelectedRows = (selectedRows) => {
       </DynamicForm>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="importDialogVisible = false">Cancel</el-button>
+          <el-button
+            @click="
+              () => {
+                importDialogVisible = false;
+                setInert(importDialog.value);
+              }
+            "
+            >Cancel</el-button
+          >
           <el-button
             v-if="commandTitle === 'excel'"
             type="primary"
@@ -541,7 +698,9 @@ const onSelectedRows = (selectedRows) => {
       v-model:currentPage="currentPage"
       v-model:pageSize="pageSize"
       @remove="deleteRow"
+      @update:cancel="(id:string)=>onCancel(id)"
       @update:index="handleIndexUpdate"
+      @update:all="handleUpdate"
       @update:currentPage="(page: number) => handlePageChange(page)"
       @update:pageSize="(size:number)=>handleSizeChange(size)"
     />

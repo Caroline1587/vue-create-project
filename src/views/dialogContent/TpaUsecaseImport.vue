@@ -6,24 +6,6 @@ import Tree from "@/views/dialogContent/Tree.vue";
 
 const searchInput = ref("");
 
-const treeData = ref([
-  { id: 1, label: "hello", children: [] },
-  { id: 2, label: "world", children: [] },
-  { id: 3, label: "yes", children: [] },
-  { id: 4, label: "or no", children: [] },
-]);
-const role = ref({
-  enableFolderAdd: true,
-  enableFolderEdit: true,
-  enableFolderDelete: true,
-});
-
-const folderExpand = ref(true);
-const defaultProps = ref({
-  children: "children",
-  label: "label",
-});
-
 interface IEmits {
   (e: "update:selectedRows", value: any): void;
 }
@@ -46,7 +28,7 @@ const getSelectedRows = (selectedRows) => {
     <div class="content">
       <div class="content__function">
         <div class="content__function__selectedCount">
-          <div class="selectedContent">已选234项测试用例</div>
+          <div class="selectedContent">todo:已选234项测试用例</div>
         </div>
         <div class="content__function__searchNFilter">
           <div class="searchfold">

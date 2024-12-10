@@ -31,6 +31,8 @@ const emits = defineEmits([
   "update:pageSize",
   "remove",
   "update:index",
+  "update:cancel",
+  "update:all",
 ]);
 
 const handleRemove = (index: number) => emits("remove", index);
@@ -41,33 +43,59 @@ const handleSizeChange = (size: number) => {
   emits("update:pageSize", size);
 };
 
-const handleCancel = (curPageIndex) => {};
+const handleCancel = async (curPageIndex,row) => {
 
-const handleMoveUp = (curPageIndex) => {
+  console.log("row in cancel",row);
+  await cancelTask(row.id)
+  emits("update:all");
+  
+  //变成已取消状态
+  // row.generate_status=3;
+  // emits("update:cancel",row.case_number);
+};
+
+const handleMoveUp = async (curPageIndex,row) => {
   console.log("currentPage====", props.currentPage);
+  console.log('row in tasktable',row);
+  const id=row.id//获取id；
+  await moveUpByTaskId(id)
 
-  const index = (props.currentPage - 1) * props.pageSize + curPageIndex;
-  if (index > 0) {
-    console.log("上移 index", index);
-    const preIndex = index - 1;
-    // 通知父组件更新数据
-    emits("update:index", index, preIndex); // 通过事件将更新的数据传递给父组件
-  }
+  //   if(moveUpByTaskId(id)){
+  //     const index = (props.currentPage - 1) * props.pageSize + curPageIndex;
+  //   if (index > 0) {
+  //     console.log("上移 index", index);
+  //     const preIndex = index - 1;
+  //     // 通知父组件更新数据
+  //     emits("update:index", index, preIndex); // 通过事件将更新的数据传递给父组件
+  //   }
+  // }
+
+  emits("update:index"); // 通过事件将更新的数据传递给父组件
 };
 
-const handleMoveDown = (curPageIndex) => {
-  const index = (props.currentPage - 1) * props.pageSize + curPageIndex;
-  const nextIndex = index + 1;
-  if (props.waitingRowsLengthInAll - 1 >= nextIndex) {
-    console.log("xia移 index", index);
+const handleMoveDown = async (curPageIndex,row) => {
+  await moveDownByTaskId(row.id)
+  //   if(moveDownByTaskId(row.id)){
+  //     const index = (props.currentPage - 1) * props.pageSize + curPageIndex;
+  //     const nextIndex = index + 1;
+  //   if (props.waitingRowsLengthInAll - 1 >= nextIndex) {
+  //     console.log("xia移 index", index);
 
-    // 通知父组件更新数据
-    emits("update:index", index, nextIndex); // 通过事件将更新的数据传递给父组件
-  }
+  //     // 通知父组件更新数据
+  //     emits("update:index", index, nextIndex); // 通过事件将更新的数据传递给父组件
+  //   }
+  // }
+  
+  emits("update:index");
 };
 
-const handleStop = (curPageIndex) => {};
-const handleStopToNext = (curPageIndex) => {};
+const handleStop = async (curPageIndex,row) => {
+  console.log("certain row in tasktable",row);
+  
+  await cancelTask(row.id)
+  emits("update:all");
+};
+// const handleStopToNext = (curPageIndex) => {};
 
 // const buildStatusContentColor=computed(()=>{
 // })
@@ -88,7 +116,7 @@ const handleStopToNext = (curPageIndex) => {};
       style="width: 100%"
     >
       <el-table-column type="index" fixed />
-      <el-table-column prop="id" label="任务编号" />
+      <el-table-column prop="case_number" label="任务编号" />
       <el-table-column prop="create_time" label="开始时间">
         <template #default="{ row }">
           <span :style="{ fontSize: '12px' }">{{ row.create_time }}</span>
@@ -170,7 +198,7 @@ const handleStopToNext = (curPageIndex) => {};
                 link
                 type="primary"
                 size="small"
-                @click="handleCancel(scope.$index)"
+                @click="handleCancel(scope.$index,scope.row)"
               >
                 <!-- <el-icon><CircleClose /></el-icon> -->
                 <img
@@ -186,7 +214,7 @@ const handleStopToNext = (curPageIndex) => {};
                 type="primary"
                 size="small"
                 :disabled="scope.$index ? false : true"
-                @click="handleMoveUp(scope.$index)"
+                @click="handleMoveUp(scope.$index,scope.row)"
               >
                 <img
                   src="@/assets/moveUp.svg"
@@ -206,7 +234,7 @@ const handleStopToNext = (curPageIndex) => {};
                     ? true
                     : false
                 "
-                @click="handleMoveDown(scope.$index)"
+                @click="handleMoveDown(scope.$index,scope.row)"
               >
                 <img
                   src="@/assets/moveDown.svg"
@@ -226,7 +254,7 @@ const handleStopToNext = (curPageIndex) => {};
                 link
                 type="primary"
                 size="small"
-                @click="handleStop(scope.$index)"
+                @click="handleStop(scope.$index,scope.row)"
               >
                 <!-- <el-icon><VideoPause /></el-icon> -->
                 <img

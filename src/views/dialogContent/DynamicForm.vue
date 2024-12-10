@@ -76,6 +76,7 @@ import {
   getLinkedSequencesByTpaId,
 } from "@/api";
 import type {
+  projectPath,
   projectPathAbout,
   IProjectsLinkStatus,
   ILinkedSequences,
@@ -126,6 +127,7 @@ const options = ref([]); //包括value和label
 // const case_source=ref(0);
 const formData = reactive({
   taskId: 9090,
+  case_number:'',
   ranges: [], // 假设我们要提取“编号范围”数据并显示
   converted_case_num: 0, //
   case_source: 0, //excel:1  link:2
@@ -242,43 +244,42 @@ async function onSelectFocused(value) {
     }); //获取项目绝对路径
     formData.options = options.value;
   } else if (value === "projectName") {
-    return (options.value = [
-      { label: "op1", value: "op1" },
-      { label: "op2", value: "op2" },
-    ]);
+    // return (options.value = [
+    //   { label: "op1", value: "op1" },
+    //   { label: "op2", value: "op2" },
+    // ]);
     formData.case_source = 2;
     let res = await getProjectsLinkStatus(); //linkedIdList
-    options.value = res.map((project) => {
-      /////====== todo:
-      /**
-   *   {
-            "isLinked": false,
-            "linkedId": null,
-            "projectName": "demo"
-        },
-        {
-            "isLinked": true,
-            "linkedId": "5e6a6b20937f4db991203b369c9d9686",
-            "linkedProjectName": "TAE生成序列项目",
-            "projectName": "用例同步"
-        }
-  */
-      let show = "";
-      let value = "";
-      let disabled: boolean;
-      if (project.isLinked) {
-        show = `${project.projectName}(${project.linkedProjectName})`;
-        value = project.linkedId;
-        disabled = false;
-      } else {
-        show = project.projectName;
-        value = show;
-        disabled = true;
-      }
-
-      return { label: show, value: value, disabled };
-    });
+    const linked=res.filter((project:IProjectsLinkStatus)=>project.isLinked).map((project:IProjectsLinkStatus)=>({ label: project.linkedProjectName, value: project.linkedId, disabled:false,projectName:project.projectName }));
+    formData.options = options.value;
+    return options.value=linked;
+  //   options.value = res.map((project) => {
+  //     /////====== todo:
+  //     /**
+  //  *   {
+  //           "isLinked": false,
+  //           "linkedId": null,
+  //           "projectName": "demo"
+  //       },
+  //       {
+  //           "isLinked": true,
+  //           "linkedId": "5e6a6b20937f4db991203b369c9d9686",
+  //           "linkedProjectName": "TAE生成序列项目",
+  //           "projectName": "用例同步"
+  //       }
+  // */
+  //     let show = "";
+  //     let value = "";
+  //     let disabled: boolean=true;
+  //     if (project.isLinked) {
+  //       show = project.linkedProjectName;
+  //       value = project.linkedId;
+  //       disabled = false;
+  //       return { label: show, value: value, disabled };
+  //     }   
+  //   });
   }
+
 }
 
 /**
@@ -286,12 +287,36 @@ async function onSelectFocused(value) {
  *
  * @param option
  */
-const onSelected = (option: string) => {
-  console.log("optionValue=====", optionValue.value);
-  formData.target_location = option;
-  // optionValue.value=option;
-  emits("update:selectedOption", option);
-  // excelParse(case_source); //解析excel文件
+const onSelected = async () => {
+  console.log("optionValue=====", optionValue.value);//获取project-id
+  //options已获取
+  console.log('options.value=====',options.value);
+  
+  const confirmedOption:projectPathAbout=options.value.map((op)=>{
+    if(optionValue.value===op.value)return op;
+  })[0]//判断id获取对应的完整project信息
+
+  console.log('confirmedOption.projectName======',confirmedOption.projectName );
+  
+  //获取所有允许保存位置：
+  const allPath=await fetchTargetPath();
+  console.log('allPath in form',allPath);
+  
+  const project=allPath.filter((path:projectPathAbout)=>path.projectName==confirmedOption.projectName)[0];
+  console.log("project in form",project);
+  
+  const target_location=project.absPath;
+  formData.target_location=target_location;
+
+  console.log('target_location in form',target_location);
+  console.log("form in danamic",formData);
+  
+
+
+  emits("update:formDataValue",formData)
+  // formData.target_location=target_location;
+  // formData.taskId=
+  emits("update:selectedOption", target_location);
 };
 </script>
 <style lang="scss" scoped>
@@ -302,7 +327,7 @@ const onSelected = (option: string) => {
 }
 :deep(.el-form-item__label) {
   max-width: 120px !important;
-  background-color: red;
+  // background-color: red;
 }
 .input-file-self {
   width: auto;
