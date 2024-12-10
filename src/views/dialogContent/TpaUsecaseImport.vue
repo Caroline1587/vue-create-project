@@ -4,13 +4,22 @@ import { ref, defineEmits } from "vue";
 
 import Tree from "@/views/dialogContent/Tree.vue";
 
-const searchInput = ref("");
+interface IProps{
+  linkedId:string
+}
+const props=defineProps<IProps>();
+const linkedId=ref(props.linkedId);
 
 interface IEmits {
   (e: "update:selectedRows", value: any): void;
+  (e: "update:selectedRowsLength", value: any): void;
 }
 const emits = defineEmits<IEmits>();
 
+const searchInput = ref("");
+const selectedRowsLength=ref(0);
+
+const getSelectedRowsLength=(rowsLen:number)=>selectedRowsLength.value=rowsLen;
 const getSelectedRows = (selectedRows) => {
   console.log("selectedRows  in tae", selectedRows);
   emits("update:selectedRows", selectedRows);
@@ -28,7 +37,7 @@ const getSelectedRows = (selectedRows) => {
     <div class="content">
       <div class="content__function">
         <div class="content__function__selectedCount">
-          <div class="selectedContent">todo:已选234项测试用例</div>
+          <div class="selectedContent">已选 <span class="selectedContent__length">{{selectedRowsLength}}</span> 项测试用例</div>
         </div>
         <div class="content__function__searchNFilter">
           <div class="searchfold">
@@ -46,7 +55,7 @@ const getSelectedRows = (selectedRows) => {
         </div>
       </div>
       <div class="content__main">
-        <Tree @update:selectedRows="getSelectedRows" />
+        <Tree :linkedId="linkedId" @update:selectedRows="getSelectedRows"  @update:selectedRowsLength="getSelectedRowsLength"/>
       </div>
       <!-- <div class="content__buttons">
         <el-button class="cancel">Cancel</el-button>
@@ -128,6 +137,11 @@ const getSelectedRows = (selectedRows) => {
           text-align: left;
           text-underline-position: from-font;
           text-decoration-skip-ink: none;
+          &__length{
+            color: red;
+            font-weight: bolder;
+            font-size: 14px;
+          }
         }
       }
       .content__function__searchNFilter {

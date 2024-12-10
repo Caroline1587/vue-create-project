@@ -92,6 +92,9 @@ interface IEmits {
   (e: "update:formDataValue", value?: string | number | object): void;
   // (e: "inputClick"): void;
   (e: "update:selectedOption", value?: string | number | object): void;
+ 
+  (e: "update:linkedId", value?: string | number | object): void;
+
 }
 const emits = defineEmits<IEmits>();
 
@@ -224,15 +227,6 @@ const handleFileSelect = (event: Event) => {
 
 //todo:
 //当选择器的输入框获得焦点时触发，加载options选项
-
-// async function getAllTargetPath(){
-//   let res=await fetchTargetPath()
-//   return res;
-// }
-// const onSelectFocused = () => {
-//   options.value=getAllTargetPath();
-// };
-
 async function onSelectFocused(value) {
   if (value === "target_location") {
     formData.case_source = 1; //excel
@@ -244,40 +238,11 @@ async function onSelectFocused(value) {
     }); //获取项目绝对路径
     formData.options = options.value;
   } else if (value === "projectName") {
-    // return (options.value = [
-    //   { label: "op1", value: "op1" },
-    //   { label: "op2", value: "op2" },
-    // ]);
     formData.case_source = 2;
-    let res = await getProjectsLinkStatus(); //linkedIdList
+    let res = await getProjectsLinkStatus(); //linkedIdList==项目名称位置下拉信息
     const linked=res.filter((project:IProjectsLinkStatus)=>project.isLinked).map((project:IProjectsLinkStatus)=>({ label: project.linkedProjectName, value: project.linkedId, disabled:false,projectName:project.projectName }));
     formData.options = options.value;
     return options.value=linked;
-  //   options.value = res.map((project) => {
-  //     /////====== todo:
-  //     /**
-  //  *   {
-  //           "isLinked": false,
-  //           "linkedId": null,
-  //           "projectName": "demo"
-  //       },
-  //       {
-  //           "isLinked": true,
-  //           "linkedId": "5e6a6b20937f4db991203b369c9d9686",
-  //           "linkedProjectName": "TAE生成序列项目",
-  //           "projectName": "用例同步"
-  //       }
-  // */
-  //     let show = "";
-  //     let value = "";
-  //     let disabled: boolean=true;
-  //     if (project.isLinked) {
-  //       show = project.linkedProjectName;
-  //       value = project.linkedId;
-  //       disabled = false;
-  //       return { label: show, value: value, disabled };
-  //     }   
-  //   });
   }
 
 }
@@ -296,8 +261,10 @@ const onSelected = async () => {
     if(optionValue.value===op.value)return op;
   })[0]//判断id获取对应的完整project信息
 
-  console.log('confirmedOption.projectName======',confirmedOption.projectName );
+  console.log('confirmedOption===',confirmedOption);
   
+  console.log('confirmedOption.projectName======',confirmedOption.projectName );
+
   //获取所有允许保存位置：
   const allPath=await fetchTargetPath();
   console.log('allPath in form',allPath);
@@ -311,12 +278,11 @@ const onSelected = async () => {
   console.log('target_location in form',target_location);
   console.log("form in danamic",formData);
   
-
-
   emits("update:formDataValue",formData)
   // formData.target_location=target_location;
   // formData.taskId=
   emits("update:selectedOption", target_location);
+  emits("update:linkedId",  optionValue.value);
 };
 </script>
 <style lang="scss" scoped>

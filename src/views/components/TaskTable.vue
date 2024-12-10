@@ -57,8 +57,7 @@ const handleCancel = async (curPageIndex,row) => {
 const handleMoveUp = async (curPageIndex,row) => {
   console.log("currentPage====", props.currentPage);
   console.log('row in tasktable',row);
-  const id=row.id//获取id；
-  await moveUpByTaskId(id)
+  await moveUpByTaskId(row.id)
 
   //   if(moveUpByTaskId(id)){
   //     const index = (props.currentPage - 1) * props.pageSize + curPageIndex;
@@ -95,14 +94,16 @@ const handleStop = async (curPageIndex,row) => {
   await cancelTask(row.id)
   emits("update:all");
 };
-// const handleStopToNext = (curPageIndex) => {};
 
-// const buildStatusContentColor=computed(()=>{
-// })
-
-// const tableColumnFields:ITableColumnFields= ref([]);
-
-// const operationsContent = {};
+const formatCaseSource=(row, column, cellValue, index)=>{
+  if (cellValue === 1) {
+      return 'excel';  // 如果 case_source 为 1，显示 excel
+    } else if (cellValue === 2) {
+      return 'tpa';    // 如果 case_source 为 2，显示 tpa
+    } else {
+      return '';       // 其他情况显示为空
+    }
+}
 </script>
 
 <template>
@@ -135,6 +136,7 @@ const handleStop = async (curPageIndex,row) => {
       <el-table-column
         prop="case_source"
         label="用例来源"
+        :formatter="formatCaseSource"
         show-overflow-tooltip
       />
       <el-table-column
@@ -213,7 +215,7 @@ const handleStop = async (curPageIndex,row) => {
                 link
                 type="primary"
                 size="small"
-                :disabled="scope.$index ? false : true"
+                :disabled="(scope.$index===0 && ((currentPage - 1)===0 ))? true : false"
                 @click="handleMoveUp(scope.$index,scope.row)"
               >
                 <img
@@ -230,7 +232,7 @@ const handleStop = async (curPageIndex,row) => {
                 size="small"
                 :disabled="
                   scope.$index ===
-                  waitingRowsLengthInAll - (currentPage - 1) * pageSize - 1
+                  (waitingRowsLengthInAll - (currentPage - 1) * pageSize - 1)
                     ? true
                     : false
                 "
