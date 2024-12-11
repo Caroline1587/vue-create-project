@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
 import {
   RefreshRight,
   MoreFilled,
   SuccessFilled,
-  CircleClose,
 } from "@element-plus/icons-vue";
 import {
   cancelTask,
-  cancelAllTask,
   moveUpByTaskId,
   moveDownByTaskId,
 } from "@/api";

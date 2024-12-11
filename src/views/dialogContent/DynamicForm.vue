@@ -55,25 +55,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, reactive, ref, watch } from "vue";
+import { reactive, ref } from "vue";
 import * as XLSX from "xlsx";
-import dayjs from "dayjs";
+
 import {
-  fetchTaskData,
-  createTask,
-  cancelTask,
-  cancelAllTask,
-  moveUpByTaskId,
-  moveDownByTaskId,
   fetchTargetPath,
   getProjectsLinkStatus,
-  getLinkedSequencesByTpaId,
 } from "@/api";
 import type {
-  projectPath,
   projectPathAbout,
   IProjectsLinkStatus,
-  ILinkedSequences,
 } from "@/types";
 
 const props = defineProps({
@@ -190,7 +181,7 @@ const handleFileSelect = (event: Event) => {
 };
 
 //当选择器的输入框获得焦点时触发，加载options选项
-async function onSelectFocused(value) {
+async function onSelectFocused(value: string|number|undefined) {
   if (value === "target_location") {
     formData.case_source = 1; //excel
     let res = await fetchTargetPath();

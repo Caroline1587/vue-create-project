@@ -1,37 +1,26 @@
 <script setup lang="ts">
-import { ComponentSize, ElMessageBox } from "element-plus";
+import { ElMessageBox } from "element-plus";
 import {
   computed,
   defineAsyncComponent,
   onMounted,
-  provide,
-  reactive,
   ref,
-  watch,
   watchEffect,
 } from "vue";
-import { Timer, ArrowDown } from "@element-plus/icons-vue";
-import dayjs from "dayjs";
+import { ArrowDown } from "@element-plus/icons-vue";
 import { isEqual } from "lodash";
 
 import { useTaskStore } from "@/stores/task";
 import {
   fetchTaskData,
   createTask,
-  cancelTask,
   cancelAllTask,
-  moveUpByTaskId,
-  moveDownByTaskId,
-  fetchTargetPath,
-  getProjectsLinkStatus,
-  getLinkedSequencesByTpaId,
 } from "@/api/task";
 import TaskTable from "@/views/components/TaskTable.vue";
 import { ITask, ParamsToCreateTask } from "@/types";
 import { mySetInterval } from "@/hooks";
 import { generateTaskNumber } from "@/utils/generateTaskNumber";
-// import DynamicForm from "@/views/dialogContent/DynamicForm.vue";
-// import TpaUsecaseImport from "@/views/dialogContent/TpaUsecaseImport.vue";
+
 const DynamicForm = defineAsyncComponent(
   () => import("@/views/dialogContent/DynamicForm.vue")
 );
@@ -62,13 +51,6 @@ async function fetchAllTableData() {
   }
 }
 
-const tableData = ref([]); //当前页数据
-const length = computed(() => sortedAllTableData.value.length);
-const total = ref(length); // 总条目数
-const currentPage = ref(1); // 当前页码
-const pageSize = ref(20); // 每页条数
-const pageSizes = ref([20, 40, 60, 80]); // 可选择每页条数大小
-
 // 分离并按状态分组, 同时添加对应操作--allTask
 const waitingRows = ref([]);
 const inProgressRows = ref([]);
@@ -79,6 +61,13 @@ const sortedAllTableData = ref([]);
 const waitingRowsLengthInAll = computed(() => waitingRows.value.length); //等待队列长度
 const firstWaitingRow = ref(null); //等待队列第一个
 const lastWaitingRow = ref(null); //等待队列最后一个
+
+const tableData = ref([]); //当前页数据
+const length = computed(() => sortedAllTableData.value.length);
+const total = ref(length); // 总条目数
+const currentPage = ref(1); // 当前页码
+const pageSize = ref(20); // 每页条数
+const pageSizes = ref([20, 40, 60, 80]); // 可选择每页条数大小
 
 //获取当前页表格数据
 const fetchTableData = (page: number, size: number) => {
@@ -131,7 +120,6 @@ watchEffect(() => {
         lastWaitingRow.value = null;
       }
     }
-
     const newInProgressRows = getRowsByStatus(1, false); // 获取状态为 1 的任务，不排序
     if (!isEqual(newInProgressRows, inProgressRows.value)) {
       inProgressRows.value = newInProgressRows;
@@ -175,7 +163,7 @@ const importDialogVisible = ref(false);
 const commandTitle = ref("");
 const case_source = ref(0);
 
-//下拉框提供不同引入选项
+//首页下拉框提供不同选项
 const handleCommand = (command: string) => {
   importDialogVisible.value = true; //打开对话框
   removeInert(importDialog.value);
@@ -327,7 +315,7 @@ const handleCloseTestManagement = (done: () => void) => {
 
 // 选择的testCase
 const selectedRowsInTae = ref([]);
-const onSelectedRows = (selectedRows) => {
+const onSelectedRows = (selectedRows:any) => {
   selectedRowsInTae.value = selectedRows;
 };
 
@@ -345,7 +333,7 @@ const onConfirmTAEImport = () => {
   console.log("form data in home", formData.value);
 
   //- 2.每条usecase为一个任务
-  selectedRowsInTae.value.forEach((row, index) => {
+  selectedRowsInTae.value.forEach((row) => {
     const params: ParamsToCreateTask = {
       case_number: `TASK-${generateTaskNumber()}`, //自建：（excel中的formData.value.taskId）,
       converted_case_num: 1, //formData.value.converted_case_num,//

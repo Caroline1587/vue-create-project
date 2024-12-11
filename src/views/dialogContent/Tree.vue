@@ -50,7 +50,6 @@
   </div>
 </template>
 <script setup lang="ts">
-// import TreeInput from "./TreeInput.vue"; // 如果有自定义的输入组件
 import { ElTree } from "element-plus";
 import type Node from "element-plus/es/components/tree/src/model/node";
 import {  ref, watch, defineEmits } from "vue";
