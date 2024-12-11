@@ -13,8 +13,6 @@ import {
   moveDownByTaskId,
 } from "@/api";
 
-// import type{ITableColumnFields} from "@/types"
-
 const props = defineProps({
   tableData: Array, // 表格当前页数据
   total: Number, // 总条目数
@@ -22,9 +20,9 @@ const props = defineProps({
   pageSize: Number, // 每页条数
   pageSizes: Array, //每页条数 选项
   waitingRowsLengthInAll: Number, //“等待中”数据总数
+  firstWaitingRow:Object,//“等待中”第一项
+  lastWaitingRow:Object,//“等待中”最后一项
 });
-
-// const data=ref(props.tableData)
 
 const emits = defineEmits([
   "update:currentPage",
@@ -43,55 +41,37 @@ const handleSizeChange = (size: number) => {
   emits("update:pageSize", size);
 };
 
-const handleCancel = async (curPageIndex,row) => {
-
-  console.log("row in cancel",row);
-  await cancelTask(row.id)
-  emits("update:all");
-  
-  //变成已取消状态
-  // row.generate_status=3;
-  // emits("update:cancel",row.case_number);
-};
-
+// 上移下移操作
 const handleMoveUp = async (curPageIndex,row) => {
+  console.log('当前行 row:======',row);
+  console.log('等待队列 firstWaitingRow:======',props.firstWaitingRow);
+  console.log('等待队列 lastWaitingRow:======',props.lastWaitingRow);
+  
   console.log("currentPage====", props.currentPage);
   console.log('row in tasktable',row);
   await moveUpByTaskId(row.id)
-
-  //   if(moveUpByTaskId(id)){
-  //     const index = (props.currentPage - 1) * props.pageSize + curPageIndex;
-  //   if (index > 0) {
-  //     console.log("上移 index", index);
-  //     const preIndex = index - 1;
-  //     // 通知父组件更新数据
-  //     emits("update:index", index, preIndex); // 通过事件将更新的数据传递给父组件
-  //   }
-  // }
 
   emits("update:index"); // 通过事件将更新的数据传递给父组件
 };
 
 const handleMoveDown = async (curPageIndex,row) => {
   await moveDownByTaskId(row.id)
-  //   if(moveDownByTaskId(row.id)){
-  //     const index = (props.currentPage - 1) * props.pageSize + curPageIndex;
-  //     const nextIndex = index + 1;
-  //   if (props.waitingRowsLengthInAll - 1 >= nextIndex) {
-  //     console.log("xia移 index", index);
-
-  //     // 通知父组件更新数据
-  //     emits("update:index", index, nextIndex); // 通过事件将更新的数据传递给父组件
-  //   }
-  // }
-  
+ 
   emits("update:index");
 };
 
+// 停止当前任务
 const handleStop = async (curPageIndex,row) => {
   console.log("certain row in tasktable",row);
   
   await cancelTask(row.id)
+  emits("update:all");
+};
+
+const handleCancel = async (curPageIndex,row) => {
+  console.log("row in cancel",row);
+  await cancelTask(row.id)
+  
   emits("update:all");
 };
 
@@ -147,8 +127,6 @@ const formatCaseSource=(row, column, cellValue, index)=>{
       <!-- sortable -->
       <el-table-column prop="generate_status" label="生成状态">
         <template #default="scope">
-          <!-- <el-button type="primary" size="small" text loading>{{scope.row.buildStatus}}</el-button> -->
-          <!-- <el-icon><RefreshRight /></el-icon> -->
           <div class="buildStatusWrapper">
             <!-- todo： 根据 buildStatus 动态调整图标 -->
             <div
@@ -202,7 +180,6 @@ const formatCaseSource=(row, column, cellValue, index)=>{
                 size="small"
                 @click="handleCancel(scope.$index,scope.row)"
               >
-                <!-- <el-icon><CircleClose /></el-icon> -->
                 <img
                   src="@/assets/cancel.svg"
                   class="cancel icon"
@@ -215,7 +192,7 @@ const formatCaseSource=(row, column, cellValue, index)=>{
                 link
                 type="primary"
                 size="small"
-                :disabled="(scope.$index===0 && ((currentPage - 1)===0 ))? true : false"
+                :disabled="(scope.row.id==firstWaitingRow?.id)"
                 @click="handleMoveUp(scope.$index,scope.row)"
               >
                 <img
@@ -230,12 +207,7 @@ const formatCaseSource=(row, column, cellValue, index)=>{
                 link
                 type="primary"
                 size="small"
-                :disabled="
-                  scope.$index ===
-                  (waitingRowsLengthInAll - (currentPage - 1) * pageSize - 1)
-                    ? true
-                    : false
-                "
+                :disabled="(scope.row.id==lastWaitingRow?.id)"
                 @click="handleMoveDown(scope.$index,scope.row)"
               >
                 <img
@@ -258,7 +230,6 @@ const formatCaseSource=(row, column, cellValue, index)=>{
                 size="small"
                 @click="handleStop(scope.$index,scope.row)"
               >
-                <!-- <el-icon><VideoPause /></el-icon> -->
                 <img
                   src="@/assets/stop.svg"
                   class="stop icon"
@@ -272,6 +243,7 @@ const formatCaseSource=(row, column, cellValue, index)=>{
         </template>
       </el-table-column>
     </el-table>
+    
     <el-pagination
       :current-page="currentPage"
       :page-size="pageSize"
@@ -313,7 +285,6 @@ const formatCaseSource=(row, column, cellValue, index)=>{
   .operationsContent {
     .el-button + .el-button {
       margin: auto;
-      //  margin:0;
     }
   }
 }
@@ -326,6 +297,5 @@ const formatCaseSource=(row, column, cellValue, index)=>{
 .icon {
   height: 1em;
   width: 1em;
-  // color: var(--el-color-primary);//#409eff
 }
 </style>

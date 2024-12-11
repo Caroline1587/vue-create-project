@@ -18,7 +18,7 @@ service.interceptors.request.use(
     // }
     // 如果请求数据存在且不是 JSON 格式，转换为 JSON 格式
 
-    if (config.data && typeof config.data !== 'string') {
+    if (config.data && typeof config.data !== 'string'&& typeof config.data === 'object') {
       try {
         config.data = JSON.stringify(config.data);
       } catch (error) {
@@ -26,7 +26,7 @@ service.interceptors.request.use(
       }
     }
     if (config.data) {
-      config.headers["Content-Type"] = "application/json";
+      config.headers["Content-Type"] = "application/json";  
     }
 
     return config;
@@ -34,6 +34,8 @@ service.interceptors.request.use(
   (error) => {
     // 对请求错误做些什么
     console.log(error);
+    console.error('Request failed:', error.response?.data || error.message);
+
     return Promise.reject(error);
   }
 );

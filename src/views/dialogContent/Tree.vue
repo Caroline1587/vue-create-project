@@ -104,21 +104,23 @@ const currentNodeChecked = ref<string[]>([]);
 const filterText = ref("");
 const treeRef = ref<InstanceType<typeof ElTree>>();
 
-const debounceFilter = useDebounce(filterText,1000);
+// 防抖-搜索输入框
+const debounceFilter = useDebounce(filterText,500);
 watch(debounceFilter,(newVal)=>{
   if(newVal){
     treeRef.value?.filter(newVal);//调用 Tree 实例对象的 filter 方法来过滤树节点。 方法的参数就是过滤关键字
+  }else {
+    treeRef.value?.filter(''); // 当搜索框为空时，恢复所有树节点
   }
 });
-//过滤函数:  树节点的筛选
+// 过滤函数:  树节点的筛选
 const filterNode = (inputValue: string, data: TreeNodeData) => {
   if (!inputValue) return true;
   const normalizedValue = inputValue.trim().toLowerCase();
   return data.name.toLowerCase().includes(normalizedValue);
 };
 
-
-// ====== todo：懒加载子数据,仅当 lazy 属性为true 时生效
+// ======懒加载子数据,仅当 lazy 属性为true 时生效
 // let count = 1;
 // let time = 0;
 // const loadNode = (
@@ -127,7 +129,7 @@ const filterNode = (inputValue: string, data: TreeNodeData) => {
 //   reject: () => void
 // ) => {
 //   if (node.level === 0) {
-//     return resolve();
+//     return resolve([]);
 //   }
 //   time++;
 //   if (node.level > 3) return resolve([]);
@@ -144,9 +146,9 @@ const treeData = ref<TreeNodeData[]>([]);
 const allData = ref([]);
 
 const selectedNodes = ref<TreeNodeData[]>([]); // 用于存储选中节点的数据
-const expandedNodes = ref<TreeNodeData[]>([]); // 用于存储zhankai节点的数据
+const expandedNodes = ref<TreeNodeData[]>([]); // 用于存储展开节点的数据
 
-//依据选中的节点更新表格数据
+// 依据选中的节点更新表格数据
 const updateTableData = () => {
   // 表格数据是与树节点的某些数据有关
   const selectedTestcases =selectedNodes.value.flatMap(
@@ -158,17 +160,8 @@ const updateTableData = () => {
   tableData.value = selectedTestcases;
   // selectTableRows(selectedTestcases)
 };
+
 const tableRef = ref();
-
-// 选择表格行
-const selectTableRows=(testcaseInfos) =>{
-  if (!tableRef.value) return;
-  console.log('tableRef',tableRef);
-  // 清除当前的选中状态
-  tableRef.value.clearSelection();
-}
-
-
 // 选中节点的回调
 const handleCheckChange = async (
   checkNode: TreeNodeData,
@@ -182,39 +175,7 @@ const handleCheckChange = async (
       selectedNodes.value.push(checkNode);
     }
 
-    // if (checkNode.testcaseList && checkNode.testcaseList.length > 0) {
-    //   // 如果当前节点有 testcases，展示它们
-    //   tableData.value = checkNode.testcaseList.map(
-    //     (testcase: { testcaseInfo: ITestcaseInfo }) => testcase.testcaseInfo
-    //   );
-    //   //todo：选中这些testcases
-    //   console.log('todo：选中这些testcases',tableData.value);
-    //   tableRef.value.toggleAllSelection();
-
-    // } else {
-    //   // 如果需要调用后端接口，可以在这里添加
-    //   // fetchTestcaseList(data.id).then((response) => {
-    //   //   tableData.value = response.data.map((testcase) => testcase.testcaseInfo);
-    //   // });
-    // }
-
     // ======todo: 根据节点 ID 请求后端数据 async
-    //
-    // const {childrenList,hasChildren,id,name,testcaseList} = await getLinkedSequencesByTpaId();
-    // const response = {
-    //   data: [
-    //     { number: "aw1", name: "知道，前方无目标车", priority: "低" },
-    //     { number: "aw2", name: "知道，前方无目标车", priority: "高" },
-    //     { number: "aw3", name: "知道，前方无目标车", priority: "低" },
-    //     { number: "aw34", name: "知道，前方无目标车", priority: "高" },
-    //     { number: "aw34", name: "知道，前方无目标车", priority: "高" },
-    //     { number: "aw34", name: "知道，前方无目标车", priority: "高" },
-    //     { number: "aw34", name: "知道，前方无目标车", priority: "高" },
-    //     { number: "aw34", name: "知道，前方无目标车", priority: "高" },
-    //     { number: "aw34", name: "知道，前方无目标车", priority: "高" },
-    //   ],
-    // };
-    // tableData.value = response; // 返回的数据是数组
   } else {
     // 如果节点取消选中，从选中节点列表移除
     selectedNodes.value = selectedNodes.value.filter(
@@ -228,7 +189,7 @@ const handleCheckChange = async (
   updateTableData();
 };
 
-//展开、选择当前节点de其子节点
+// 展开、选择当前节点de其子节点
 const checkChildren = (data: TreeNodeData[]) => {
   data.forEach((each) => {
     // if (!currentNodeChecked.value.includes(each.id)) {
@@ -253,19 +214,18 @@ const checkChildren = (data: TreeNodeData[]) => {
   });
 };
 
-
-//linkedId
-//获取全部数据
+// 获取全部数据：linkedId
 (async () => {
-  const res = await getLinkedSequencesByTpaId(linkedId);
+  const res = await getLinkedSequencesByTpaId(linkedId.value);
   const data= res;
 
   allData.value =data;
   treeData.value = data;
 
+  if(!data) return;
   console.log("selectedNodes", selectedNodes.value);
 
-  //展开及选中第一项及其子项
+  //展开第一项及其子项
   currentNodeExpand.value.push(data[0].id);
   // currentNodeChecked.value.push(data[0].id);
   checkChildren(data[0].childrenList);
@@ -292,10 +252,11 @@ const handleSelectionChange = (rows: any) => {
   emits("update:selectedRowsLength", selectedRowsLenth.value);
 };
 
+// todo: 其他处理
 const nodeClick = (data: TreeNodeData, node: Node) => {
   console.log("节点点击:", data, node);
   // 根据点击的树节点，更新表格的数据
-  updateTableData(data);
+  // updateTableData(data);
 };
 
 const nodeExpand = (data: TreeNodeData, node: Node) => {
@@ -335,12 +296,4 @@ const handleSave = (node: Node, newData: TreeNodeData) => {
     }
   }
 }
-
-// .tree_node {
-//   cursor: pointer;
-// }
-
-// .tree_node.is-current {
-//   color: #409eff;
-// }
 </style>

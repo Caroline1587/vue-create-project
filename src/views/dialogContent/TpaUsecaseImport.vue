@@ -20,7 +20,7 @@ const searchInput = ref("");
 const selectedRowsLength=ref(0);
 
 const getSelectedRowsLength=(rowsLen:number)=>selectedRowsLength.value=rowsLen;
-const getSelectedRows = (selectedRows) => {
+const getSelectedRows = (selectedRows:any) => {
   console.log("selectedRows  in tae", selectedRows);
   emits("update:selectedRows", selectedRows);
 };
@@ -54,13 +54,10 @@ const getSelectedRows = (selectedRows) => {
           </div>
         </div>
       </div>
+      
       <div class="content__main">
         <Tree :linkedId="linkedId" @update:selectedRows="getSelectedRows"  @update:selectedRowsLength="getSelectedRowsLength"/>
       </div>
-      <!-- <div class="content__buttons">
-        <el-button class="cancel">Cancel</el-button>
-        <el-button class="ok" type="primary">OK</el-button>
-      </div> -->
     </div>
   </div>
 </template>
@@ -72,7 +69,7 @@ const getSelectedRows = (selectedRows) => {
       display: flex;
       justify-content: flex-start;
       align-items: center;
-      width: fit-content; //Hug (172px)px
+      width: fit-content; 
       height: 29px;
       box-sizing: border-box;
       padding: 0px 0px 0px 43px;
@@ -92,9 +89,9 @@ const getSelectedRows = (selectedRows) => {
         opacity: 0px;
         color: #283a64;
         font-family: Noto Sans SC;
-        font-size: 20px; //20px
+        font-size: 20px;
         font-weight: 700;
-        line-height: 28.96px; //28.96px
+        line-height: 28.96px; 
         text-align: left;
         text-underline-position: from-font;
         text-decoration-skip-ink: none;
@@ -104,9 +101,7 @@ const getSelectedRows = (selectedRows) => {
   .content {
     display: flex;
     flex-direction: column;
-    // width: 1500px;
     width: 80vw;
-    // height: 744px;
     height: fit-content;
     gap: 0px;
     opacity: 0px;
@@ -115,8 +110,6 @@ const getSelectedRows = (selectedRows) => {
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      //   width: 1500px;
-      //   height: 40px;
       height: fit-content;
       gap: 0px;
       opacity: 0px;
@@ -159,13 +152,10 @@ const getSelectedRows = (selectedRows) => {
           opacity: 0px;
           background: #f4f4f4;
         }
-        // .searchfold,
         .advancedFilter {
           display: flex;
           justify-content: center;
           align-items: center;
-
-          // width: 120px;
           height: 32px;
           gap: 5px;
         }
@@ -173,17 +163,12 @@ const getSelectedRows = (selectedRows) => {
         .filterIcon {
           max-width: 24px;
           max-height: 24px;
-          //   padding: 3.57px 4px 4.43px 4px;
-          //   gap: 0px;
-          //   opacity: 0px;
         }
       }
     }
     .content__main {
       flex: 1;
-      //   width: 1500px;
       width: 100%;
-      //   height: 648px; //Fill (648px)px
       gap: 0px;
       border: 1px 0px 0px 0px;
       opacity: 0px;
@@ -193,7 +178,6 @@ const getSelectedRows = (selectedRows) => {
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      //   width: 1500px;
       width: 100%;
       height: 56px;
       padding: 8px 0px 8px 0px;

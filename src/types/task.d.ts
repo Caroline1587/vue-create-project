@@ -31,6 +31,3 @@ export type ParamsToCreateTask = Pick<
   "case_number" | "converted_case_num" | "target_location"
 > &
   OtherInfo;
-
-// export interface ITaskData{
-// }

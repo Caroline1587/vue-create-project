@@ -5,7 +5,7 @@ export function successMessage(message: string, option?: MessageOptions) {
     message,
     ...option,
     type: "success",
-    duration: 3 * 1000,
+    duration: 2 * 1000,
     offset: 48,
   });
 }

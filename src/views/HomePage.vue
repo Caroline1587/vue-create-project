@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { ComponentSize, ElMessageBox } from "element-plus";
-import { computed, onMounted, provide, reactive, ref, watch, watchEffect } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  provide,
+  reactive,
+  ref,
+  watch,
+  watchEffect,
+} from "vue";
 import { Timer, ArrowDown } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
-import { useTaskStore } from "@/stores/task";
+import { isEqual } from "lodash";
 
+import { useTaskStore } from "@/stores/task";
 import {
   fetchTaskData,
   createTask,
@@ -17,11 +27,17 @@ import {
   getLinkedSequencesByTpaId,
 } from "@/api/task";
 import TaskTable from "@/views/components/TaskTable.vue";
-import DynamicForm from "@/views/dialogContent/DynamicForm.vue";
-import TpaUsecaseImport from "@/views/dialogContent/TpaUsecaseImport.vue";
 import { ITask, ParamsToCreateTask } from "@/types";
-import { caseNumberProduct,mySetInterval } from "@/hooks";
-
+import { mySetInterval } from "@/hooks";
+import { generateTaskNumber } from "@/utils/generateTaskNumber";
+// import DynamicForm from "@/views/dialogContent/DynamicForm.vue";
+// import TpaUsecaseImport from "@/views/dialogContent/TpaUsecaseImport.vue";
+const DynamicForm = defineAsyncComponent(
+  () => import("@/views/dialogContent/DynamicForm.vue")
+);
+const TpaUsecaseImport = defineAsyncComponent(
+  () => import("@/views/dialogContent/TpaUsecaseImport.vue")
+);
 
 export interface ITaskInTable extends ITask {
   operations?: string[] | null;
@@ -30,14 +46,14 @@ const taskStore = useTaskStore();
 
 const allTask = ref<ITask[]>([]);
 
-
-//todo: 异步获取数据并赋值
+// // 异步获取数据并赋值
 async function fetchAllTableData() {
   try {
-    const data:ITask[] = await fetchTaskData(); //获取所有任务数据
+    const data: ITask[] = await fetchTaskData(); //获取所有任务数据
     if (Array.isArray(data)) {
       allTask.value = data;
       console.log("allTask===fetchAllTableData", allTask.value);
+      // 更新与任务相关的行数据
     } else {
       console.error("Invalid data format: expected an array.");
     }
@@ -46,31 +62,13 @@ async function fetchAllTableData() {
   }
 }
 
-const tableData = ref([]);//当前页数据
+const tableData = ref([]); //当前页数据
 const length = computed(() => sortedAllTableData.value.length);
 const total = ref(length); // 总条目数
 const currentPage = ref(1); // 当前页码
 const pageSize = ref(20); // 每页条数
-const pageSizes = ref([20, 40, 60, 80]);
+const pageSizes = ref([20, 40, 60, 80]); // 可选择每页条数大小
 
-//获取当前页表格数据
-const fetchTableData = (page: number, size: number) => {
-  // console.log('sortedAllTableData.value.',sortedAllTableData.value);
-  // currentPage.value=page;
-  // pageSize.value=size;
-  let startIndex = (page - 1) * size;
-  let endIndex = startIndex + size;
-  tableData.value = sortedAllTableData.value.slice(startIndex, endIndex);
-  console.log("startIndex, endIndex", startIndex, endIndex);
-  // console.log("sortedAllTableData", sortedAllTableData.value);
-
-  // console.log(
-  //   "sortedAllTableData.value.slice(startIndex, endIndex);",
-  //   sortedAllTableData.value.slice(startIndex, endIndex)
-  // );
-};
-
-fetchAllTableData()
 // 分离并按状态分组, 同时添加对应操作--allTask
 const waitingRows = ref([]);
 const inProgressRows = ref([]);
@@ -78,14 +76,22 @@ const completedRows = ref([]);
 const cancelledRows = ref([]);
 const sortedAllTableData = ref([]);
 
-const waitingRowsLengthInAll = computed(() => waitingRows.value.length);//等待队列长度
-//不同状态对应的操作选项
+const waitingRowsLengthInAll = computed(() => waitingRows.value.length); //等待队列长度
+const firstWaitingRow = ref(null); //等待队列第一个
+const lastWaitingRow = ref(null); //等待队列最后一个
+
+//获取当前页表格数据
+const fetchTableData = (page: number, size: number) => {
+  let startIndex = (page - 1) * size;
+  let endIndex = startIndex + size;
+  tableData.value = sortedAllTableData.value.slice(startIndex, endIndex);
+  console.log("startIndex, endIndex", startIndex, endIndex);
+};
+
+//不同状态对应的operations操作选项 //0-等待中 1-执行中 2-已完成 3-已取消
 const waitingOperations = ref(["取消", "上移", "下移"]);
 const inProgressOperations = ref(["停止当前"]);
-
-
-// `operations` 是动态变化的
-const getOperationsForStatus = (status:number) => {
+const getOperationsForStatus = (status: number) => {
   switch (status) {
     case 0:
       return waitingOperations;
@@ -96,52 +102,71 @@ const getOperationsForStatus = (status:number) => {
   }
 };
 
+// 根据状态获取行数据
+function getRowsByStatus(status: number, shouldSort = true) {
+  return allTask.value
+    .filter((task: ITask) => task.generate_status === status)
+    .map((task: ITask) => ({
+      ...task,
+      operations: getOperationsForStatus(task.generate_status),
+    }))
+    .sort((a, b) => (shouldSort ? a.order_index - b.order_index : 0)); // 如果需要排序，按 order_index 排序
+}
+
+// 对获取的数据进行监听
 watchEffect(() => {
   console.log("allTask loaded:", allTask.value);
   if (allTask.value && allTask.value.length > 0) {
-    waitingRows.value = allTask.value
-      .filter((task: ITask) => task.generate_status === 0)
-      .map((task: ITask) => ({
-        ...task,
-        operations: getOperationsForStatus(task.generate_status),
-      }));
+    const newWaitingRows = getRowsByStatus(0); // 获取状态为 0 的任务，且按 order_index 排序
+    // 只有在 newWaitingRows 发生变化时才更新 waitingRows 和行状态
+    if (!isEqual(newWaitingRows, waitingRows.value)) {
+      waitingRows.value = newWaitingRows;
+      // 更新 firstWaitingRow 和 lastWaitingRow
+      if (waitingRows.value.length > 0) {
+        firstWaitingRow.value = waitingRows.value[0];
+        lastWaitingRow.value = waitingRows.value[waitingRows.value.length - 1];
+      } else {
+        // 如果没有等待行，清空 firstWaitingRow 和 lastWaitingRow
+        firstWaitingRow.value = null;
+        lastWaitingRow.value = null;
+      }
+    }
 
-    inProgressRows.value = allTask.value
-      .filter((task: ITask) => task.generate_status === 1)
-      .map((task: ITask) => ({
-        ...task,
-        operations: getOperationsForStatus(task.generate_status),
-      }));
-    completedRows.value = allTask.value
-      .filter((task: ITask) => task.generate_status === 2)
-      .map((task: ITask) => ({
-        ...task,
-        operations: getOperationsForStatus(task.generate_status),
-      }));
+    const newInProgressRows = getRowsByStatus(1, false); // 获取状态为 1 的任务，不排序
+    if (!isEqual(newInProgressRows, inProgressRows.value)) {
+      inProgressRows.value = newInProgressRows;
+    }
+    const newCompletedRows = getRowsByStatus(2, false);
+    if (!isEqual(newCompletedRows, completedRows.value)) {
+      completedRows.value = newCompletedRows;
+    }
+    const newCancelledRows = getRowsByStatus(3, false);
+    if (!isEqual(newCancelledRows, cancelledRows.value)) {
+      cancelledRows.value = newCancelledRows;
+    }
 
-    cancelledRows.value = allTask.value
-      .filter((task: ITask) => task.generate_status === 3)
-      .map((task: ITask) => ({
-        ...task,
-        operations: getOperationsForStatus(task.generate_status),
-      }));
+    sortedAllTableData.value = [
+      ...inProgressRows.value,
+      ...waitingRows.value,
+      ...completedRows.value,
+      ...cancelledRows.value,
+    ];
 
-    sortedAllTableData.value=allTask.value.sort((a, b) => a.order_index - b.order_index);  // 根据 order_index 升序排序
-    // sortedAllTableData.value=allTask.value;
-    console.log('sortedAllTableData.value=allTask.value;',sortedAllTableData.value);
-    
-    fetchTableData(currentPage.value,pageSize.value)
-    console.log("table data:",tableData.value);
-    
+    fetchTableData(currentPage.value, pageSize.value);
+    console.log("table data:", tableData.value);
   }
 });
 
-// 启动定时器
+// 启动定时器获取任务数据
 onMounted(() => {
-  mySetInterval(fetchAllTableData,fetchTableData,1000,currentPage.value,pageSize.value);
+  mySetInterval(
+    fetchAllTableData,
+    fetchTableData,
+    1000,
+    currentPage.value,
+    pageSize.value
+  );
 });
-
-//0-等待中 1-执行中 2-已完成 3-已取消
 
 const dynamicForm = ref([]);
 
@@ -229,30 +254,21 @@ const handleClose = (done: () => void) => {
 };
 
 const isConversionScopeShown = ref(false);
-
 const formData = ref(null);
 
-const onSourceFileSelect = (
-  formVal: { [key: string]: string | object } | null
-) => {
-  formData.value = formVal;
-  console.log("formData======", formData.value);
-  if (formData.value.excelPath) isConversionScopeShown.value = true;
-};
-
+//获取目标路径
 const targetLocation = ref("");
 const onOptionSelect = (option: string) => {
   console.log("目标文件目录 选择", option);
   targetLocation.value = option;
 };
+
+//获取linked-id
 const linkedId = ref("");
-const onOptionSelectId=(id: string) => {
+const onOptionSelectId = (id: string) => {
   console.log("linked-id ", id);
   linkedId.value = id;
 };
-
-// 初始化数据
-onMounted(() => fetchTableData(currentPage.value, pageSize.value));
 
 // 页码变化处理
 const handlePageChange = (page: number) => {
@@ -270,43 +286,16 @@ const handleSizeChange = (size: number) => {
   fetchTableData(currentPage.value, pageSize.value);
 };
 
-// 删除某行数据
-const deleteRow = (index: number) => {
-  allTask.value.splice(index, 1);
-  fetchTableData(currentPage.value, pageSize.value); //重新获取数据
-};
-
+//数据更新
 const handleUpdate = () => {
-  fetchAllTableData(); //更新数据
-  fetchTableData(currentPage.value, pageSize.value);
+  fetchAllTableData(); //更新所有数据
+  fetchTableData(currentPage.value, pageSize.value); //刷新当前页数据
 };
-
-//todo：调用接口======== 上移下移操作：更改index
+// 上移下移操作
 const handleIndexUpdate = (curIndex: number, changedIndex: number) => {
   console.log("父组件接受的index", curIndex);
-
-  // 交换当前项和上/下一项
-
-  //依据id
-  //todo: moveUpByTaskId(task_id)
-  //      moveDownByTaskId(task_id)
-
-  // const temp = allTask.value[curIndex];
-  // allTask.value[curIndex] = allTask.value[changedIndex];
-  // allTask.value[changedIndex] = temp;
-  // console.log("allTask", allTask.value);
   handleUpdate();
-  // console.log("allTask.value[curIndex]",allTask.value[curIndex]);
-  // console.log("allTask.value[changedIndex]",allTask.value[changedIndex]);
-
-  // 使用 splice 交换
-  // allTask.value.splice(curIndex, 1, allTask.value[changedIndex]);
-  // allTask.value.splice(changedIndex, 1, temp);
-
-  // console.log("index ,changing index",curIndex,changedIndex);
 };
-
-// const isClearForm=ref(false);
 
 //excel: 确认关闭对话框前：记录并保存form数据
 async function getCreateRes(params: ParamsToCreateTask) {
@@ -315,7 +304,75 @@ async function getCreateRes(params: ParamsToCreateTask) {
   // if (res) await fetchAllTableData();
 }
 
-//todo: 1. excel-确认导入
+//2. test management导入
+const testManagementVisible = ref(false);
+const testManagementDialog = ref<HTMLElement | null>(null);
+
+// 选择linked project后
+const onNext = () => {
+  testManagementVisible.value = true; //打开下一个对话框
+  removeInert(testManagementDialog.value);
+};
+// 关闭对话框前
+const handleCloseTestManagement = (done: () => void) => {
+  ElMessageBox.confirm("Are you sure to close this dialog?")
+    .then(() => {
+      setInert(testManagementDialog.value);
+      done();
+    })
+    .catch(() => {
+      // catch error
+    });
+};
+
+// 选择的testCase
+const selectedRowsInTae = ref([]);
+const onSelectedRows = (selectedRows) => {
+  selectedRowsInTae.value = selectedRows;
+};
+
+// tae导入的数据 加入任务列表
+const onConfirmTAEImport = () => {
+  testManagementVisible.value = false; //关闭当前窗口；
+  setInert(testManagementDialog.value);
+
+  importDialogVisible.value = false; //关闭项目选项窗口；
+  setInert(importDialog.value);
+
+  //- 1.选中的所有usecase构成一个任务（to be continued）
+  const ids = selectedRowsInTae.value.map((row) => row.id);
+  console.log("ids  in homepage", ids);
+  console.log("form data in home", formData.value);
+
+  //- 2.每条usecase为一个任务
+  selectedRowsInTae.value.forEach((row, index) => {
+    const params: ParamsToCreateTask = {
+      case_number: `TASK-${generateTaskNumber()}`, //自建：（excel中的formData.value.taskId）,
+      converted_case_num: 1, //formData.value.converted_case_num,//
+      target_location: formData.value.target_location, //
+      case_source: formData.value.case_source, //2
+      other_info:
+        formData.value.case_source === 1
+          ? { excelPath: formData.value.excelPath }
+          : { linkedIdList: [row.id] },
+    };
+    getCreateRes(params);
+    console.log("params====", params);
+  });
+
+  console.log("selectedRowsInTae.value", ...selectedRowsInTae.value);
+  
+  currentPage.value=1;//回到首页
+  //刷新
+  handleUpdate();
+};
+
+// 停止所有任务
+const onStopAll = () => {
+  cancelAllTask();
+};
+
+// TODO: 1. excel-确认导入
 const onConfirm = () => {
   importDialogVisible.value = false; //关闭对话框
   setInert(importDialog.value);
@@ -342,94 +399,15 @@ const onConfirm = () => {
   console.log("currentPage===", currentPage.value);
 
   fetchTableData(currentPage.value, pageSize.value);
-  //todo: 当前对话框数据清空
-  // isClearForm.value=true;
-  // provide('isClearForm',true);
 };
 
-//2. test management导入
-const testManagementVisible = ref(false);
-const testManagementDialog = ref<HTMLElement | null>(null);
-
-const onNext = () => {
-  testManagementVisible.value = true; //打开下一个对话框
-  removeInert(testManagementDialog.value);
-};
-// 关闭对话框前
-const handleCloseTestManagement = (done: () => void) => {
-  ElMessageBox.confirm("Are you sure to close this dialog?")
-    .then(() => {
-      setInert(testManagementDialog.value);
-      done();
-    })
-    .catch(() => {
-      // catch error
-    });
-};
-
-const selectedRowsInTae = ref([]);
-
-const onSelectedRows = (selectedRows) => {
-  console.log("selectedRows in homepage===", selectedRows);
-  selectedRowsInTae.value = selectedRows;
-  // rowsLenth.value=selectedRows.length;
-};
-
-const initCaseNumber=ref(0);
-const caseNumber=ref(0);
-watch(initCaseNumber,(nv)=>{
-  if(nv){
-    caseNumber.value=nv;
-  }
-})
-//todo: tae导入的数据 加入
-const onConfirmTAEImport = () => {
-  testManagementVisible.value = false; //关闭当前窗口；
-  setInert(testManagementDialog.value);
-
-  importDialogVisible.value = false; //关闭项目选项窗口；
-  setInert(importDialog.value);
-
-  //- 1.选中的所有usecase构成一个任务
-  const ids = selectedRowsInTae.value.map((row) => row.id);
-  console.log("ids  in homepage", ids);
-  console.log("form data in home", formData.value);
-
-  //- 2.每条usecase为一个任务
-  selectedRowsInTae.value.forEach((row,index) => {
-    const params: ParamsToCreateTask = {
-      case_number: `TASK-${index}`, //formData.value.taskId,
-      converted_case_num: 1, //formData.value.converted_case_num,//
-      target_location: formData.value.target_location, //
-      case_source: formData.value.case_source, //2
-      other_info:
-        formData.value.case_source === 1
-          ? { excelPath: formData.value.excelPath }
-          : { linkedIdList: [row.id] },
-    };
-    getCreateRes(params);
-    console.log("params====", params);
-  });
-
-  console.log("selectedRowsInTae.value", ...selectedRowsInTae.value);
-
-  fetchAllTableData(); //获取所有数据
-  fetchTableData(currentPage.value, pageSize.value); //刷新当前页数据
-};
-
-// const onCancel=(case_number: string)=>{
-//   console.log("case_number in homepage cancel",case_number);
-// //  let changedRow= allTask.value.findIndex((task)=>{
-// //     return task.case_number==case_number;
-// //   })
-
-// //   allTask.value[changedRow].generate_status=3
-// //   // cancelTask()
-// }
-
-// 停止所有任务
-const onStopAll = () => {
-  cancelAllTask();
+//转换范围模块
+const onSourceFileSelect = (
+  formVal: { [key: string]: string | object } | null
+) => {
+  formData.value = formVal;
+  console.log("formData======", formData.value);
+  if (formData.value.excelPath) isConversionScopeShown.value = true;
 };
 </script>
 
@@ -559,7 +537,10 @@ const onStopAll = () => {
           <div class="title">新建任务</div>
         </div>
       </template>
-      <TpaUsecaseImport @update:selectedRows="onSelectedRows" :linkedId="linkedId" />
+      <TpaUsecaseImport
+        @update:selectedRows="onSelectedRows"
+        :linkedId="linkedId"
+      />
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="testManagementVisible = false">Cancel</el-button>
@@ -574,9 +555,10 @@ const onStopAll = () => {
       :total="total"
       :pageSizes="pageSizes"
       :waitingRowsLengthInAll="waitingRowsLengthInAll"
+      :firstWaitingRow="firstWaitingRow"
+      :lastWaitingRow="lastWaitingRow"
       v-model:currentPage="currentPage"
       v-model:pageSize="pageSize"
-      @remove="deleteRow"
       @update:cancel="(id:string)=>onCancel(id)"
       @update:index="handleIndexUpdate"
       @update:all="handleUpdate"
@@ -608,18 +590,13 @@ const onStopAll = () => {
         font-weight: bolder;
       }
     }
-
     .header__btn {
       &__create {
         margin-right: 0.5rem;
-        // .el-tooltip__trigger {
-        //   text-align: center;
-        // }
       }
     }
   }
   .innerConversionScope {
-    // height: 200px;
     margin-bottom: 18px;
     &__content {
       flex: 1;
@@ -634,7 +611,6 @@ const onStopAll = () => {
       align-self: first baseline;
       padding: 0 12px 0 0;
     }
-
     .card-header,
     .card__content {
       &__page,
@@ -653,13 +629,8 @@ const onStopAll = () => {
     display: flex;
     justify-content: center;
     align-items: center;
-    // width: fit-content; //1600px
-    min-height: 400px; //880px
-    // overflow: visible;
-    // top: 100px;
-    // left: 160px;
+    min-height: 400px;
     gap: 0px;
-    // opacity: 0;
     .my-header {
       display: flex;
       justify-content: flex-start;
@@ -669,7 +640,6 @@ const onStopAll = () => {
       box-sizing: border-box;
       gap: 8px;
       opacity: 0px;
-
       .rectangle {
         width: 3px;
         height: 17px;
@@ -702,18 +672,14 @@ const onStopAll = () => {
     // overflow: scroll;
     width: 100%;
     :deep(.el-pagination) {
-      //   position: absolute;
-      //   bottom: 0;
-      //   left: 0;
       margin-top: 0.5rem;
     }
   }
 }
 :deep(.tpe-usecase-import) {
   width: fit-content;
-
 }
-:deep(.--el-dialog-margin-top){
-  // --el-dialog-margin:0 auto;
+:deep(.el-dialog) {
+  margin: 0px;
 }
 </style>

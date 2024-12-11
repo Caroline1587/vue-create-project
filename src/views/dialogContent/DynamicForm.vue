@@ -1,4 +1,3 @@
-<!-- DynamicForm.vue -->
 <template>
   <el-form :model="formData" label-width="120px">
     <!-- 遍历字段，渲染el-form-item -->
@@ -19,7 +18,6 @@
           @change="handleFileSelect"
           :key="formData[field.key]"
         /> -->
-
         <div
           v-else-if="field.type === 'file' && field.value === 'excelPath'"
           class="el-form-item__content el-input el-input__wrapper --flex-center"
@@ -28,7 +26,6 @@
           <label for="file_uploads" class="input-file-label">
             {{ selectedFile ? selectedFile : field.placeholder }}</label
           >
-
           <input
             type="file"
             id="file_uploads"
@@ -37,9 +34,6 @@
             accept=".xlsx,.xls"
           />
         </div>
-        <!-- v-model="formData[field.value]" -->
-        <!-- filterable -->
-
         <el-select-v2
           v-else-if="field.type === 'select'"
           :placeholder="field.placeholder"
@@ -90,48 +84,18 @@ const props = defineProps({
 interface IEmits {
   (e: "resetFormData"): void;
   (e: "update:formDataValue", value?: string | number | object): void;
-  // (e: "inputClick"): void;
-  (e: "update:selectedOption", value?: string | number | object): void;
- 
+  (e: "update:selectedOption", value?: string | number | object): void; 
   (e: "update:linkedId", value?: string | number | object): void;
-
 }
 const emits = defineEmits<IEmits>();
 
-// 触发清空的标志
-// const formCleared = ref(false);
-// watch(()=>props.isClearForm,(newItem, oldItem) => {
-//     if (newItem) {
-//       console.log('数据项发生变化:', newItem);
-//       // 清空 formData 内容
-//       Object.keys(formData).forEach(key => {
-//       if (Array.isArray(formData[key])) {
-//         formData[key] = []; // 清空数组字段
-//       } else {
-//         formData[key] = ''; // 清空非数组字段
-//       }
-//     });
-//     emits('resetFormData')
-//     formCleared.value = true; // 更新状态，表示表单已清空
-//     } else {
-//       console.log('该项已删除');
-//     }
-//   },
-//   { deep: true, immediate: true } // 深度监听，立即执行
-// )
-
-// let isClear=ref(false);
-// isClear.value=inject("clearForm");
-// 用来存储解析后的文件数据
-
 const optionValue = ref("");
-
 const options = ref([]); //包括value和label
-// const case_source=ref(0);
+
 const formData = reactive({
   taskId: 9090,
   case_number:'',
-  ranges: [], // 假设我们要提取“编号范围”数据并显示
+  ranges: [], // 假设要提取“编号范围”数据并显示
   converted_case_num: 0, //
   case_source: 0, //excel:1  link:2
   options: [],
@@ -154,7 +118,7 @@ const selectedFile = ref<String | null>(null);
 //   return isExcel;  // 返回 false 将会阻止文件上传
 // };
 
-// 处理文件选择
+// 处理选择的文件
 const handleFileSelect = (event: Event) => {
   // console.log("File selection triggered");
   const inputElement = event.target as HTMLInputElement;
@@ -225,7 +189,6 @@ const handleFileSelect = (event: Event) => {
   reader.readAsArrayBuffer(file);
 };
 
-//todo:
 //当选择器的输入框获得焦点时触发，加载options选项
 async function onSelectFocused(value) {
   if (value === "target_location") {
@@ -234,23 +197,22 @@ async function onSelectFocused(value) {
     console.log("path---res", res);
     options.value = res.map((project) => {
       const show = `${project.projectName}: ${project.absPath}`;
+
       return { label: show, value: project.absPath };
     }); //获取项目绝对路径
     formData.options = options.value;
   } else if (value === "projectName") {
-    formData.case_source = 2;
+    formData.case_source = 2;//tpa
     let res = await getProjectsLinkStatus(); //linkedIdList==项目名称位置下拉信息
     const linked=res.filter((project:IProjectsLinkStatus)=>project.isLinked).map((project:IProjectsLinkStatus)=>({ label: project.linkedProjectName, value: project.linkedId, disabled:false,projectName:project.projectName }));
     formData.options = options.value;
+
     return options.value=linked;
   }
-
 }
 
 /**
- * todo：select选项，调对应接口
- *
- * @param option
+ * select选项，调对应接口
  */
 const onSelected = async () => {
   console.log("optionValue=====", optionValue.value);//获取project-id
@@ -261,26 +223,15 @@ const onSelected = async () => {
     if(optionValue.value===op.value)return op;
   })[0]//判断id获取对应的完整project信息
 
-  console.log('confirmedOption===',confirmedOption);
-  
-  console.log('confirmedOption.projectName======',confirmedOption.projectName );
-
   //获取所有允许保存位置：
   const allPath=await fetchTargetPath();
-  console.log('allPath in form',allPath);
   
   const project=allPath.filter((path:projectPathAbout)=>path.projectName==confirmedOption.projectName)[0];
-  console.log("project in form",project);
   
   const target_location=project.absPath;
   formData.target_location=target_location;
-
-  console.log('target_location in form',target_location);
-  console.log("form in danamic",formData);
   
   emits("update:formDataValue",formData)
-  // formData.target_location=target_location;
-  // formData.taskId=
   emits("update:selectedOption", target_location);
   emits("update:linkedId",  optionValue.value);
 };
@@ -293,7 +244,6 @@ const onSelected = async () => {
 }
 :deep(.el-form-item__label) {
   max-width: 120px !important;
-  // background-color: red;
 }
 .input-file-self {
   width: auto;
