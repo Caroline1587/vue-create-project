@@ -21,7 +21,6 @@ export const getProjectsLinkStatus = (): IProjectsLinkStatus => {
 
 //项目列表展示信息获取
 export const getLinkedSequencesByTpaId = (tpaId:string): ILinkedSequences => {
-  return getMockData().data;
   console.log(tpaId);
   return request.post("/tae/getLinkedSequencesByTpaId",JSON.stringify({tpaId}));
 };

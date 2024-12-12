@@ -4,7 +4,7 @@
       <el-input v-model="filterText" placeholder="Filter keyword" />
       <!-- :load="loadNode"
         lazy -->
-      <el-tree
+      <el-tree-v2
         ref="treeRef"
         :props="defaultProps"
         :data="treeData"
@@ -22,14 +22,22 @@
         @node-expand="nodeExpand"
         @node-collapse="nodeCollapse"
       >
-      </el-tree>
+      <template #default="{ node, data }">
+        <span class="custom-tree-node">
+          <span>{{ node.label }}</span>
+          <span v-if="(data.testcaseList.length)!==0">{{ (data.testcaseList.length) }}</span>
+        </span>
+      </template>
+
+      </el-tree-v2>
     </div>
     <div class="tableContainer">
       <el-table
         ref="tableRef"
         :data="tableData"
         style="width: 100%"
-        max-height="60vh"
+        max-height="70vh"
+        height="100%"
         border
         @selection-change="handleSelectionChange"
       >
@@ -50,9 +58,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ElTree } from "element-plus";
+import { ElTable, ElTree } from "element-plus";
 import type Node from "element-plus/es/components/tree/src/model/node";
-import {  ref, watch, defineEmits } from "vue";
+import {  ref, watch, defineEmits, onMounted, nextTick } from "vue";
 import { getLinkedSequencesByTpaId } from "@/api";
 import { ILinkedSequence, ITestcase, ITestcaseInfo } from "@/types";
 import {useDebounce} from "@/hooks"
@@ -71,12 +79,14 @@ interface TreeNodeData {
 const defaultProps = {
   label: "name",
   children: "childrenList",
-  isLeaf: "hasChildren",
+  isLeaf: (node:TreeNodeData)=>!node.hasChildren,
 };
 
-// 表格数据与列配置
-const tableData = ref<ILinkedSequence[]>([]);
 
+const treeData = ref<TreeNodeData[]>([]);
+const allData = ref<any[]>([]);
+
+// 表格数据与列配置
 interface TableColumn {
   label: string;
   prop: string;
@@ -119,73 +129,80 @@ const filterNode = (inputValue: string, data: TreeNodeData) => {
   return data.name.toLowerCase().includes(normalizedValue);
 };
 
-// ======懒加载子数据,仅当 lazy 属性为true 时生效
-// let count = 1;
-// let time = 0;
-// const loadNode = (
-//   node: Node,
-//   resolve: (data: TreeNodeData[]) => void,
-//   reject: () => void
-// ) => {
-//   if (node.level === 0) {
-//     return resolve([]);
-//   }
-//   time++;
-//   if (node.level > 3) return resolve([]);
-//   //生成数据
-//   setTimeout(() => {
-//     // if (time < 2) return reject(); //模拟加载失败，调用 reject 以保持节点状态，并允许远程加载继续
-//     let data: TreeNodeData[] = [];
-
-//     resolve(data); //返回给下一层的数据
-//   }, 500);
-// };
-
-const treeData = ref<TreeNodeData[]>([]);
-const allData = ref([]);
-
 const selectedNodes = ref<TreeNodeData[]>([]); // 用于存储选中节点的数据
 const expandedNodes = ref<TreeNodeData[]>([]); // 用于存储展开节点的数据
 
-// 依据选中的节点更新表格数据
-const updateTableData = () => {
-  // 表格数据是与树节点的某些数据有关
-  const selectedTestcases =selectedNodes.value.flatMap(
-    (node: TreeNodeData) =>
-      node.testcaseList?.map(
-        (testcase: { testcaseInfo: ITestcaseInfo }) => testcase.testcaseInfo
-      ) || []
-  );
-  tableData.value = selectedTestcases;
-  // selectTableRows(selectedTestcases)
-};
+// // 依据选中的节点更新表格数据
+// const updateTableData = () => {
+//   // 表格数据是与树节点的某些数据有关
+//   const selectedTestcases =selectedNodes.value.flatMap(
+//     (node: TreeNodeData) =>
+//       node.testcaseList?.map(
+//         (testcase: { testcaseInfo: ITestcaseInfo }) => testcase.testcaseInfo
+//       ) || []
+//   );
+//   tableData.value = selectedTestcases;
+//   // selectTableRows(selectedTestcases)
+// };
 
-const tableRef = ref();
+const tableData = ref<ILinkedSequence[]>([]);//当前表格展示的数据
+const tableRef = ref<InstanceType<typeof ElTable> | null>(null);//表格实例
+const selectedTableRows=ref<any[]>([]);//当前表格中选中的行
+
 // 选中节点的回调
-const handleCheckChange = async (
-  checkNode: TreeNodeData,
+const handleCheckChange = (
+  node: TreeNodeData,
   checked: boolean,
   indeterminate: boolean
 ) => {
-  console.log("handleCheckChange", checkNode, checked, indeterminate);
-  if (checked) {
-    // 如果节点被选中，加入到选中节点列表
-    if (!selectedNodes.value.includes(checkNode)) {
-      selectedNodes.value.push(checkNode);
-    }
-
-    // ======todo: 根据节点 ID 请求后端数据 async
-  } else {
-    // 如果节点取消选中，从选中节点列表移除
-    selectedNodes.value = selectedNodes.value.filter(
-      (node: TreeNodeData) => node !== checkNode
+  console.log("handleCheckChange", node, checked, indeterminate);
+  if (checked && node.testcaseList.length!==0) {
+    const newData=node.testcaseList.map(
+    (testcase: any) => testcase.testcaseInfo || []
+  )
+    // 避免重复添加数据
+    const newEntries = newData.filter(
+      (newRow: any) => !tableData.value.some((row: any) => row.id === newRow.id)
     );
+    if (newEntries.length > 0) {
+      // 合并新数据
+      tableData.value.push(...newEntries);
+    }
+    //自动选中表格中新增的行
+    // nextTick(() => {
+      // if(tableRef.value){
+      //   const updatedSelection=[...selectedTableRows.value,...newData]
+      //   tableRef.value.clearSelection();//清空表格当前选中状态
+      //   console.log('tableRef.value',tableRef.value);
+      //   updatedSelection.forEach((row)=>tableRef.value.toggleRowSelection(row,true));
+      //   selectedTableRows.value=updatedSelection;
+      // }
+    // });
+
+  } else if(!checked && node.testcaseList){
+  // 如果节点取消选中，从表格中移除
+    const idsToRemove = node.testcaseList.map(
+      (testcase: any) => testcase.testcaseInfo.id
+    );
+
+    tableData.value = tableData.value.filter(
+      (item: any) => !idsToRemove.includes(item.id)
+    );
+
+    // 更新表格选中状态
+    nextTick(() => {
+      if (tableRef.value) {
+        const updatedSelection = selectedTableRows.value.filter(
+          (row) => !idsToRemove.includes(row.id)
+        );
+        tableRef.value.clearSelection();
+        updatedSelection.forEach((row) => {
+          tableRef.value!.toggleRowSelection(row, true);
+        });
+        selectedTableRows.value = updatedSelection;
+      }
+    });
   }
-
-  tableRef.value.toggleAllSelection();
-
-  // 更新 tableData
-  updateTableData();
 };
 
 // 展开、选择当前节点de其子节点
@@ -215,9 +232,7 @@ const checkChildren = (data: TreeNodeData[]) => {
 
 // 获取全部数据：linkedId
 (async () => {
-  const res = await getLinkedSequencesByTpaId(linkedId.value);
-  const data= res;
-
+  const data = await getLinkedSequencesByTpaId(linkedId.value) as any[];
   allData.value =data;
   treeData.value = data;
 
@@ -228,8 +243,7 @@ const checkChildren = (data: TreeNodeData[]) => {
   currentNodeExpand.value.push(data[0].id);
   // currentNodeChecked.value.push(data[0].id);
   checkChildren(data[0].childrenList);
-
-  updateTableData();
+  // updateTableData();
 })();
 
 interface IEmits {
@@ -238,17 +252,20 @@ interface IEmits {
 }
 const emits = defineEmits<IEmits>();
 
-// 记录选择的表格行
-const selectedRows = ref<ITestcase[]>([]);
-const selectedRowsLenth=ref(0);
+// // 记录选择的表格行
+// const selectedRows = ref<ITestcase[]>([]);
+// const selectedRowsLenth=ref(0);
 
+//监听表格多选状态变化
 const handleSelectionChange = (rows: any) => {
-  selectedRows.value = rows;
-  selectedRowsLenth.value=rows.length;
-  console.log("当前选择的行:", selectedRows.value);
+  selectedTableRows.value=rows;
 
-  emits("update:selectedRows", selectedRows.value);
-  emits("update:selectedRowsLength", selectedRowsLenth.value);
+  // selectedRows.value = rows;
+  // selectedRowsLenth.value=rows.length;
+  console.log("当前选择的行:", selectedTableRows.value);
+
+  emits("update:selectedRows", selectedTableRows.value);
+  emits("update:selectedRowsLength", selectedTableRows.value.length);
 };
 
 // todo: 其他处理
@@ -284,6 +301,16 @@ const handleSave = (node: Node, newData: TreeNodeData) => {
     display: flex;
     flex-direction: column;
     flex: 2;
+    :deep(.el-tree){
+      flex: 1;
+      min-height:200px
+    };
+    :deep(.el-vl__wrapper){
+      height: 100%;
+    };
+    :deep(.el-vl__window){
+      height: 100% !important;
+    };
   }
   .tableContainer {
     flex: 8;

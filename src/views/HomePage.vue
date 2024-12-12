@@ -76,6 +76,7 @@ const fetchTableData = (page: number, size: number) => {
   tableData.value = sortedAllTableData.value.slice(startIndex, endIndex);
   console.log("startIndex, endIndex", startIndex, endIndex);
 };
+fetchAllTableData()
 
 //不同状态对应的operations操作选项 //0-等待中 1-执行中 2-已完成 3-已取消
 const waitingOperations = ref(["取消", "上移", "下移"]);
@@ -147,13 +148,13 @@ watchEffect(() => {
 
 // 启动定时器获取任务数据
 onMounted(() => {
-  mySetInterval(
-    fetchAllTableData,
-    fetchTableData,
-    1000,
-    currentPage.value,
-    pageSize.value
-  );
+  // mySetInterval(
+  //   fetchAllTableData,
+  //   fetchTableData,
+  //   1000,
+  //   currentPage.value,
+  //   pageSize.value
+  // );
 });
 
 const dynamicForm = ref([]);
